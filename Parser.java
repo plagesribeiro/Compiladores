@@ -48,8 +48,6 @@ public class Parser {
     }
 
     boolean Declaracao() {
-        boolean isDeclaracao = false;
-
         if (token.tag == Tag.CHAR || token.tag == Tag.INT || token.tag == Tag.STRING || token.tag == Tag.FLOAT) {
             readNextToken();
             if (ListaDeIds()) {
@@ -81,11 +79,10 @@ public class Parser {
                 exitError();
             }
         }
-        return isDeclaracao;
+        return false;
     }
 
     boolean ListaDeIds() {
-        boolean isListaDeIds = false;
         if (Id()) {
             boolean correct = true;
             do {
@@ -100,7 +97,7 @@ public class Parser {
                 }
             } while (correct);
         }
-        return isListaDeIds;
+        return false;
     }
 
     boolean Id() {
@@ -108,7 +105,6 @@ public class Parser {
     }
 
     boolean Expressao() {
-        boolean isExpressao = false;
         if (ExpS()) {
             readNextToken();
             if (Comp()) {
@@ -125,7 +121,7 @@ public class Parser {
             exitError();
         }
 
-        return isExpressao;
+        return false;
     }
 
     boolean Comp() {
@@ -134,13 +130,124 @@ public class Parser {
     }
 
     boolean ExpS() {
-        boolean isExpS = false;
         if (token.tag != Tag.MINUS && token.tag != Tag.PLUS) {
             if (T()) {
-
+                readNextToken();
+                do {
+                    if (token.tag == Tag.MINUS || token.tag == Tag.PLUS || token.tag == Tag.OR) {
+                        readNextToken();
+                        if (!T()) {
+                            exitError();
+                        }
+                    } else {
+                        return true;
+                    }
+                } while (true);
+            } else {
+                exitError();
+            }
+        } else {
+            readNextToken();
+            if (T()) {
+                readNextToken();
+                do {
+                    if (token.tag == Tag.MINUS || token.tag == Tag.PLUS || token.tag == Tag.OR) {
+                        readNextToken();
+                        if (!T()) {
+                            exitError();
+                        }
+                    } else {
+                        return true;
+                    }
+                } while (true);
+            } else {
+                exitError();
             }
         }
-        return isExpS;
+        return false;
+    }
+
+    boolean T() {
+        if (F()) {
+            readNextToken();
+            do {
+                if (token.tag == Tag.MULTIPLY || token.tag == Tag.SLASH_FORWARD || token.tag == Tag.AND
+                        || token.tag == Tag.DIV || token.tag == Tag.MOD) {
+                    readNextToken();
+                    if (!F()) {
+                        exitError();
+                    }
+                } else {
+                    return true;
+                }
+            } while (true);
+        } else {
+            exitError();
+        }
+        return false;
+    }
+
+    boolean F() {
+        if (token.tag == Tag.ID) {
+            readNextToken();
+            if (token.tag == Tag.OPEN_BRACKET) {
+                readNextToken();
+                if (Expressao()) {
+                    readNextToken();
+                    if (token.tag == Tag.CLOSE_BRACKET) {
+                        return true;
+                    } else {
+                        exitError();
+                    }
+                } else {
+                    exitError();
+                }
+            } else {
+                return true;
+            }
+
+        } else if (token.tag == Tag.VALUE_CHAR || token.tag == Tag.VALUE_FLOAT || token.tag == Tag.VALUE_STRING
+                || token.tag == Tag.VALUE_INT) {
+            return true;
+
+        } else if (!F()) {
+            return true;
+
+        } else if (token.tag == Tag.OPEN_PARENTHESIS) {
+            return P();
+
+        } else if (token.tag == Tag.INT) {
+            readNextToken();
+            return P();
+
+        } else if (token.tag == Tag.FLOAT) {
+            readNextToken();
+            return P();
+
+        } else {
+            exitError();
+        }
+
+        return false;
+    }
+
+    boolean P() {
+        if (token.tag == Tag.OPEN_PARENTHESIS) {
+            readNextToken();
+            if (Expressao()) {
+                readNextToken();
+                if (token.tag == Tag.CLOSE_PARENTHESIS) {
+                    return true;
+                } else {
+                    exitError();
+                }
+            } else {
+                exitError();
+            }
+        } else {
+            exitError();
+        }
+        return false;
     }
 
     public static void main(String args[]) throws IOException {

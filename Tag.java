@@ -34,7 +34,6 @@ public class Tag {
     public final static byte ID = 33;
     public final static byte DIV = 34;
     public final static byte WRITE = 35;
-    public final static byte VALUE = 36;
     public final static byte STRING = 37;
     public final static byte VALUE_CHAR = 38;
     public final static byte VALUE_STRING = 39;
