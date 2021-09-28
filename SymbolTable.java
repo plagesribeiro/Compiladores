@@ -8,7 +8,8 @@ public class SymbolTable {
     }
 
     public Token insertToken(String lexeme, Token t) {
-        return table.put(lexeme, t);
+        table.put(lexeme, t);
+        return t;
     }
 
     public Token findToken(String lexeme) {

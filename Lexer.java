@@ -16,39 +16,41 @@ public class Lexer {
         this.state = 1;
         this.giveBack = false;
         this.st = new SymbolTable();
-        this.st.insertToken("const", new Token("const", true));
-        this.st.insertToken("int", new Token("int", true));
-        this.st.insertToken("while", new Token("while", true));
-        this.st.insertToken("if", new Token("if", true));
-        this.st.insertToken("float", new Token("float", true));
-        this.st.insertToken("else", new Token("else", true));
-        this.st.insertToken("and", new Token("&&", true));
-        this.st.insertToken("or", new Token("||", true));
-        this.st.insertToken("not", new Token("!", true));
-        this.st.insertToken("assign", new Token("<-", true));
-        this.st.insertToken("equals", new Token("=", true));
-        this.st.insertToken("(", new Token("(", true));
-        this.st.insertToken(")", new Token(")", true));
-        this.st.insertToken("<", new Token("<", true));
-        this.st.insertToken(">", new Token(">", true));
-        this.st.insertToken("ne", new Token("!=", true));
-        this.st.insertToken("ge", new Token(">=", true));
-        this.st.insertToken("le", new Token("<=", true));
-        this.st.insertToken("comma", new Token(",", true));
-        this.st.insertToken("plus", new Token("+", true));
-        this.st.insertToken("minus", new Token("-", true));
-        this.st.insertToken("star", new Token("*", true));
-        this.st.insertToken("bar", new Token("/", true));
-        this.st.insertToken("semicolon", new Token(";", true));
-        this.st.insertToken("{", new Token("{", true));
-        this.st.insertToken("}", new Token("}", true));
-        this.st.insertToken("readln", new Token("readln", true));
-        this.st.insertToken("div", new Token("div", true));
-        this.st.insertToken("write", new Token("write", true));
-        this.st.insertToken("writeln", new Token("writeln", true));
-        this.st.insertToken("mod", new Token("mod", true));
-        this.st.insertToken("[", new Token("[", true));
-        this.st.insertToken("]", new Token("]", true));
+        this.st.insertToken("const", new Token("const", Tag.CONST));
+        this.st.insertToken("int", new Token("int", Tag.INT));
+        this.st.insertToken("char", new Token("char", Tag.INT));
+        this.st.insertToken("while", new Token("while", Tag.WHILE));
+        this.st.insertToken("if", new Token("if", Tag.IF));
+        this.st.insertToken("float", new Token("float", Tag.FLOAT));
+        this.st.insertToken("else", new Token("else", Tag.ELSE));
+        this.st.insertToken("&&", new Token("&&", Tag.AND));
+        this.st.insertToken("||", new Token("||", Tag.OR));
+        this.st.insertToken("!", new Token("!", Tag.NOT));
+        this.st.insertToken("<-", new Token("<-", Tag.ASSIGN));
+        this.st.insertToken("=", new Token("=", Tag.EQ));
+        this.st.insertToken("(", new Token("(", Tag.OPEN_PARENTHESIS));
+        this.st.insertToken(")", new Token(")", Tag.CLOSE_PARENTHESIS));
+        this.st.insertToken("<", new Token("<", Tag.GREATER));
+        this.st.insertToken(">", new Token(">", Tag.LOWER));
+        this.st.insertToken("!=", new Token("!=", Tag.NOT_EQUAL));
+        this.st.insertToken(">=", new Token(">=", Tag.GREATER_EQUAL));
+        this.st.insertToken("<=", new Token("<=", Tag.LOWER_EQUAL));
+        this.st.insertToken(",", new Token(",", Tag.COMMA));
+        this.st.insertToken("+", new Token("+", Tag.PLUS));
+        this.st.insertToken("-", new Token("-", Tag.MINUS));
+        this.st.insertToken("*", new Token("*", Tag.MULTIPLY));
+        this.st.insertToken("/", new Token("/", Tag.SLASH_FORWARD));
+        this.st.insertToken(";", new Token(";", Tag.SEMICOLON));
+        this.st.insertToken("{", new Token("{", Tag.OPEN_BRACE));
+        this.st.insertToken("}", new Token("}", Tag.CLOSE_BRACE));
+        this.st.insertToken("readln", new Token("readln", Tag.READLN));
+        this.st.insertToken("div", new Token("div", Tag.DIV));
+        this.st.insertToken("write", new Token("write", Tag.WRITE));
+        this.st.insertToken("writeln", new Token("writeln", Tag.WRITELN));
+        this.st.insertToken("mod", new Token("mod", Tag.MOD));
+        this.st.insertToken("[", new Token("[", Tag.OPEN_BRACKET));
+        this.st.insertToken("]", new Token("]", Tag.CLOSE_BRACKET));
+        this.st.insertToken("string", new Token("string", Tag.STRING));
     }
 
     private int readch() throws IOException {
@@ -66,6 +68,7 @@ public class Lexer {
             switch (state) {
                 case 1:
                     if (c == -1) {
+                        System.out.println(line + " linhas compiladas.");
                         return null;
                     }
                     state = checkStateFrom1(c);
@@ -316,10 +319,7 @@ public class Lexer {
                     }
                     break;
                 case 18:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if (lexeme.length() > 32) {
+                    if (lexeme.length() > 32) {
                         if (c == '\n') {
                             line--;
                         }
@@ -330,7 +330,7 @@ public class Lexer {
                     } else if (isValid((char) c)) {
                         giveBack = true;
                         state = 5;
-                    } else {
+                    } else if (c != -1) {
                         errorInvalidCharacter();
                         return null;
                     }
@@ -341,6 +341,7 @@ public class Lexer {
                         return null;
                     } else if ((char) c == '*') {
                         state = 20;
+                        lexeme = "";
                     } else {
                         if (c != -1) {
                             giveBack = true;
@@ -388,16 +389,22 @@ public class Lexer {
                         return null;
                     }
             }
-            if (c == -1) {
-                System.out.println(line + " linhas compiladas.");
-                return null;
-            }
         }
 
-        Token t = new Token(lexeme);
-        if (st.findToken(lexeme) == null) {
-            st.insertToken(lexeme, t);
+        Token t = st.findToken(lexeme);
+        if (t == null) {
+            if (isLetter(lexeme.charAt(0)) || lexeme.charAt(0) == '_')
+                t = st.insertToken(lexeme, new Token(lexeme, Tag.ID));
+            else if (lexeme.charAt(0) == '\'' || (lexeme.charAt(0) == '0' && lexeme.charAt(1) == 'x'))
+                t = st.insertToken(lexeme, new Token(lexeme, Tag.VALUE_CHAR));
+            else if (lexeme.charAt(0) == '"')
+                t = st.insertToken(lexeme, new Token(lexeme, Tag.VALUE_STRING));
+            else if (lexeme.contains("."))
+                t = st.insertToken(lexeme, new Token(lexeme, Tag.VALUE_FLOAT));
+            else
+                t = st.insertToken(lexeme, new Token(lexeme, Tag.VALUE_INT));
         }
+
         lexeme = "";
         state = 1;
         if (giveBack) {
@@ -529,5 +536,18 @@ public class Lexer {
         if (letters.contains(Character.toString(c)))
             return true;
         return false;
+    }
+
+    public static void main(String[] args) throws Exception {
+        Lexer lexer = new Lexer();
+
+        Token t;
+        do {
+            t = lexer.scan();
+            if (t != null) {
+                System.out.println(t.toString());
+            }
+        } while (t != null);
+        // lexer.st.listTable();
     }
 }

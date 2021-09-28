@@ -1,18 +1,16 @@
 public class Token {
     public String lexeme;
     private byte tag;
-    public boolean isReserved;
+    private byte size;
 
-    public Token(String lexeme) {
+    public Token(String lexeme, byte tag) {
         this.lexeme = lexeme;
-        this.tag = (byte) lexeme.hashCode();
-        this.isReserved = false;
+        this.tag = tag;
     }
 
-    public Token(String lexeme, boolean isReserved) {
-        this.lexeme = lexeme;
-        this.tag = (byte) lexeme.hashCode();
-        this.isReserved = true;
+    public Token() {
+        this.lexeme = "";
+        this.tag = 0;
     }
 
     public String toString() {

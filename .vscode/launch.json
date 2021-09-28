@@ -6,7 +6,7 @@
     "configurations": [
 
         {
-            "args": ["<", "input", ">", "saida"],
+            "args": ["<", "input"],
             "type": "java",
             "name": "Launch Current File",
             "request": "launch",
