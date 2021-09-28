@@ -2,10 +2,10 @@ import java.io.IOException;
 
 public class Lexer {
     private String lexeme;
-    private int line;
+    public int line;
     private int c;
     private int last;
-    private SymbolTable st;
+    public SymbolTable st;
     private int state;
     private boolean finalState = false;
     private boolean giveBack;
@@ -16,39 +16,39 @@ public class Lexer {
         this.state = 1;
         this.giveBack = false;
         this.st = new SymbolTable();
-        this.st.insertToken("const", new Token("const"));
-        this.st.insertToken("int", new Token("int"));
-        this.st.insertToken("while", new Token("while"));
-        this.st.insertToken("if", new Token("if"));
-        this.st.insertToken("float", new Token("float"));
-        this.st.insertToken("else", new Token("else"));
-        this.st.insertToken("and", new Token("&&"));
-        this.st.insertToken("or", new Token("||"));
-        this.st.insertToken("not", new Token("!"));
-        this.st.insertToken("assign", new Token("<-"));
-        this.st.insertToken("equals", new Token("="));
-        this.st.insertToken("(", new Token("("));
-        this.st.insertToken(")", new Token(")"));
-        this.st.insertToken("<", new Token("<"));
-        this.st.insertToken(">", new Token(">"));
-        this.st.insertToken("ne", new Token("!="));
-        this.st.insertToken("ge", new Token(">="));
-        this.st.insertToken("le", new Token("<="));
-        this.st.insertToken("comma", new Token(","));
-        this.st.insertToken("plus", new Token("+"));
-        this.st.insertToken("minus", new Token("-"));
-        this.st.insertToken("star", new Token("*"));
-        this.st.insertToken("bar", new Token("/"));
-        this.st.insertToken("semicolon", new Token(";"));
-        this.st.insertToken("{", new Token("{"));
-        this.st.insertToken("}", new Token("}"));
-        this.st.insertToken("readln", new Token("readln"));
-        this.st.insertToken("div", new Token("div"));
-        this.st.insertToken("write", new Token("write"));
-        this.st.insertToken("writeln", new Token("writeln"));
-        this.st.insertToken("mod", new Token("mod"));
-        this.st.insertToken("[", new Token("["));
-        this.st.insertToken("]", new Token("]"));
+        this.st.insertToken("const", new Token("const", true));
+        this.st.insertToken("int", new Token("int", true));
+        this.st.insertToken("while", new Token("while", true));
+        this.st.insertToken("if", new Token("if", true));
+        this.st.insertToken("float", new Token("float", true));
+        this.st.insertToken("else", new Token("else", true));
+        this.st.insertToken("and", new Token("&&", true));
+        this.st.insertToken("or", new Token("||", true));
+        this.st.insertToken("not", new Token("!", true));
+        this.st.insertToken("assign", new Token("<-", true));
+        this.st.insertToken("equals", new Token("=", true));
+        this.st.insertToken("(", new Token("(", true));
+        this.st.insertToken(")", new Token(")", true));
+        this.st.insertToken("<", new Token("<", true));
+        this.st.insertToken(">", new Token(">", true));
+        this.st.insertToken("ne", new Token("!=", true));
+        this.st.insertToken("ge", new Token(">=", true));
+        this.st.insertToken("le", new Token("<=", true));
+        this.st.insertToken("comma", new Token(",", true));
+        this.st.insertToken("plus", new Token("+", true));
+        this.st.insertToken("minus", new Token("-", true));
+        this.st.insertToken("star", new Token("*", true));
+        this.st.insertToken("bar", new Token("/", true));
+        this.st.insertToken("semicolon", new Token(";", true));
+        this.st.insertToken("{", new Token("{", true));
+        this.st.insertToken("}", new Token("}", true));
+        this.st.insertToken("readln", new Token("readln", true));
+        this.st.insertToken("div", new Token("div", true));
+        this.st.insertToken("write", new Token("write", true));
+        this.st.insertToken("writeln", new Token("writeln", true));
+        this.st.insertToken("mod", new Token("mod", true));
+        this.st.insertToken("[", new Token("[", true));
+        this.st.insertToken("]", new Token("]", true));
     }
 
     private int readch() throws IOException {
@@ -136,7 +136,7 @@ public class Lexer {
                     if (c == -1) {
                         errorEOFNotExpected();
                         return null;
-                    } else if (isValid((char) c)) {
+                    } else if (isAsciiExt(c)) {
                         state = 7;
                         lexeme += (char) c;
                     } else {
@@ -165,7 +165,7 @@ public class Lexer {
                     int count = 0;
                     for (; (char) c != '"'; c = readch()) {
                         if (c != '\n' || c != '"' || c != '$') {
-                            if (isValidStr((char) c) && count <= 254) {
+                            if (isValidStr(c) && count <= 254) {
                                 lexeme += (char) c;
                             } else {
                                 if (count > 254) {
@@ -179,6 +179,7 @@ public class Lexer {
                         count++;
                     }
                     lexeme += (char) c;
+                    lexeme = lexeme.substring(0, lexeme.length() - 1) + "$\"";
                     state = 5;
                     break;
                 case 9:
@@ -317,6 +318,12 @@ public class Lexer {
                 case 18:
                     if (c == -1) {
                         errorEOFNotExpected();
+                        return null;
+                    } else if (lexeme.length() > 32) {
+                        if (c == '\n') {
+                            line--;
+                        }
+                        errorNotIdentifiedLexeme(lexeme);
                         return null;
                     } else if (isLetter((char) c) || isDigit((char) c) || (char) c == '.' || (char) c == '_') {
                         lexeme += (char) c;
@@ -462,21 +469,28 @@ public class Lexer {
     }
 
     void errorNotIdentifiedLexeme(String lexeme) {
-        System.out.println(line + "\nlexema nao identificado [" + lexeme + "].");
+        System.out.print(line + "\nlexema nao identificado [" + lexeme + "].");
     }
 
     void errorInvalidCharacter() {
-        System.out.println(line + "\ncaractere invalido.");
+        System.out.print(line + "\ncaractere invalido.");
     }
 
     void errorEOFNotExpected() {
-        System.out.println(line + "\nfim de arquivo não esperado");
+        System.out.print(line + "\nfim de arquivo nao esperado.");
     }
 
     private boolean isInvalidTokenBegin(char c) {
         String invalid = ":\\%?";
         if (invalid.contains(Character.toString(c)))
             return true;
+        return false;
+    }
+
+    private boolean isAsciiExt(int c) {
+        if (c >= 0 && c <= 255) {
+            return true;
+        }
         return false;
     }
 
@@ -496,9 +510,8 @@ public class Lexer {
         return false;
     }
 
-    private boolean isValidStr(char c) {
-        String valid = " _.,;:()[]{}+-'/|\\&%!?><=";
-        if (isDigit(c) || isLetter(c) || valid.contains(Character.toString(c))) {
+    private boolean isValidStr(int c) {
+        if ((c >= 0 && c <= 255) && (c != '$' && c != '"' && c != '\n')) {
             return true;
         }
         return false;
@@ -511,23 +524,10 @@ public class Lexer {
         return false;
     }
 
-    private boolean isLetter(char c) {
+    public boolean isLetter(char c) {
         String letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         if (letters.contains(Character.toString(c)))
             return true;
         return false;
-    }
-
-    public static void main(String[] args) throws Exception {
-        Lexer lexer = new Lexer();
-
-        Token t;
-        do {
-            t = lexer.scan();
-            // if (t != null) {
-            // System.out.println(t.toString());
-            // }
-        } while (t != null);
-        // lexer.st.listTable();
     }
 }
