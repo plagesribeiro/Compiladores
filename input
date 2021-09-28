@@ -1,13 +1,20 @@
-int n<-?;
+/** Exemplo de Programa na linguagem L */
+
+const MAXITER=0111.;
+int __n<-1,m<-2, max;
 string nome;
-const MAXITER=10;
+const MAXITER=0;
 
 write("Digite seu nome: ");
 readln(nome);
 
 float percentual;
 while n<=MAXITER {
-  percentual<-float(n)/MAXITER;
-  writeln(percentual,": Ola' ",nome);
-  n<-n+1;
+  writeln("Ola' ",nome);
+  writeln("O maior numero e' ",max);
+  n<-n*1;
 }
+if (nome[01] > nome[1]) {
+  if (nome[a] > nome[2+1]) max<-nome[0]; else max<-nome[2];
+  } else if (nome[1] > nome[2]) max<-nome[1]; else { max<-nome[2]; }
+writeln("O maior numero e' ");

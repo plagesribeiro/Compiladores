@@ -1,6 +1,6 @@
 public class Token {
     public String lexeme;
-    private byte tag;
+    public byte tag;
     private byte size;
 
     public Token(String lexeme, byte tag) {
