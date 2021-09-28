@@ -1,5 +1,4 @@
 import java.io.IOException;
-import java.util.Arrays;
 
 public class Parser {
     private Lexer lexer;
@@ -20,14 +19,6 @@ public class Parser {
         }
     }
 
-    void readNextToken(int i) {
-        try {
-            token = lexer.scan();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     void exitError(int i) {
         System.out.print(lexer.line + "\nfim de arquivo nao esperado.");
         System.exit(1);
@@ -39,27 +30,30 @@ public class Parser {
     }
 
     public void S() {
-        readNextToken(1);
-        if (token != null) {
-            if (Declaracao()) {
-
+        do {
+            readNextToken();
+            if (!Declaracao() && !Comandos()) {
+                exitError();
             }
-        }
+        } while (true);
     }
 
     boolean Declaracao() {
         if (token.tag == Tag.CHAR || token.tag == Tag.INT || token.tag == Tag.STRING || token.tag == Tag.FLOAT) {
             readNextToken();
             if (ListaDeIds()) {
+                readNextToken();
                 if (token.tag == Tag.SEMICOLON) {
                     return true;
                 } else {
                     exitError();
                 }
+            } else {
+                exitError();
             }
         } else if (token.tag == Tag.CONST) {
             readNextToken();
-            if (Id()) {
+            if (token.tag == Tag.ID) {
                 readNextToken();
                 if (token.tag == Tag.EQ) {
                     if (Expressao()) {
@@ -82,26 +76,172 @@ public class Parser {
         return false;
     }
 
+    boolean Comandos() {
+        if (token.tag == Tag.OPEN_BRACE) {
+            do {
+                readNextToken();
+            } while (Comando());
+            if (token.tag == Tag.CLOSE_BRACE) {
+                return true;
+            } else {
+                exitError();
+            }
+        } else if (Comando()) {
+            return true;
+        }
+        return false;
+    }
+
+    boolean Comando() {
+        if (Atribuicao() || Repeticao() || Teste() || Leitura() || Escrita()) {
+            readNextToken();
+        }
+        if (token.tag == Tag.SEMICOLON) {
+            return true;
+        } else {
+            exitError();
+        }
+        return false;
+
+    }
+
     boolean ListaDeIds() {
-        if (Id()) {
-            boolean correct = true;
+        if (token.tag == Tag.ID) {
             do {
                 readNextToken();
                 if (token.tag == Tag.COMMA) {
                     readNextToken();
-                    if (!Id()) {
+                    if (!(token.tag == Tag.ID)) {
                         exitError();
                     }
                 } else {
                     return true;
                 }
-            } while (correct);
+            } while (true);
         }
         return false;
     }
 
-    boolean Id() {
-        return token.tag == Tag.ID;
+    boolean Atribuicao() {
+        if (token.tag == Tag.ID) {
+            readNextToken();
+            if (token.tag == Tag.OPEN_BRACKET) {
+                readNextToken();
+                if (Expressao()) {
+                    readNextToken();
+                    if (token.tag == Tag.CLOSE_BRACKET) {
+                        return true;
+                    } else {
+                        exitError();
+                    }
+                } else {
+                    exitError();
+                }
+            }
+            if (token.tag == Tag.ASSIGN) {
+                readNextToken();
+                if (Expressao()) {
+                    return true;
+                } else {
+                    exitError();
+                }
+            } else {
+                exitError();
+            }
+        }
+        return false;
+    }
+
+    boolean Repeticao() {
+        if (token.tag == Tag.WHILE) {
+            readNextToken();
+            if (Expressao()) {
+                readNextToken();
+                if (Comandos()) {
+                    return true;
+                } else {
+                    exitError();
+                }
+            } else {
+                exitError();
+            }
+        }
+        return false;
+    }
+
+    boolean Teste() {
+        if (token.tag == Tag.IF) {
+            readNextToken();
+            if (Comandos()) {
+                readNextToken();
+                if (token.tag == Tag.ELSE) {
+                    readNextToken();
+                    if (Comandos()) {
+                        return true;
+                    } else {
+                        exitError();
+                    }
+                } else {
+                    exitError();
+                }
+            } else {
+                exitError();
+            }
+        }
+        return false;
+    }
+
+    boolean Leitura() {
+        if (token.tag == Tag.READLN) {
+            readNextToken();
+            if (token.tag == Tag.OPEN_PARENTHESIS) {
+                readNextToken();
+                if (token.tag == Tag.ID || Expressao()) {
+                    readNextToken();
+                    if (token.tag == Tag.CLOSE_PARENTHESIS) {
+                        return true;
+                    } else {
+                        exitError();
+                    }
+                } else {
+                    exitError();
+                }
+            } else {
+                exitError();
+            }
+        }
+        return false;
+    }
+
+    boolean Escrita() {
+        if (token.tag == Tag.WRITE || token.tag == Tag.WRITELN) {
+            readNextToken();
+            if (token.tag == Tag.OPEN_PARENTHESIS) {
+                readNextToken();
+                if (Expressao()) {
+                    do {
+                        readNextToken();
+                        if (token.tag == Tag.COMMA) {
+                            readNextToken();
+                            if (!Expressao()) {
+                                exitError();
+                            }
+                        } else {
+                            if (token.tag == Tag.CLOSE_PARENTHESIS) {
+                                return true;
+                            } else {
+                                exitError();
+                            }
+                        }
+                    } while (true);
+                } else {
+                    exitError();
+                }
+            } else {
+                exitError();
+            }
+        }
+        return false;
     }
 
     boolean Expressao() {
@@ -130,47 +270,32 @@ public class Parser {
     }
 
     boolean ExpS() {
-        if (token.tag != Tag.MINUS && token.tag != Tag.PLUS) {
-            if (T()) {
-                readNextToken();
-                do {
-                    if (token.tag == Tag.MINUS || token.tag == Tag.PLUS || token.tag == Tag.OR) {
-                        readNextToken();
-                        if (!T()) {
-                            exitError();
-                        }
-                    } else {
-                        return true;
-                    }
-                } while (true);
-            } else {
-                exitError();
-            }
-        } else {
+        if (token.tag == Tag.MINUS || token.tag == Tag.PLUS) {
             readNextToken();
-            if (T()) {
+        }
+        if (T()) {
+            do {
                 readNextToken();
-                do {
-                    if (token.tag == Tag.MINUS || token.tag == Tag.PLUS || token.tag == Tag.OR) {
-                        readNextToken();
-                        if (!T()) {
-                            exitError();
-                        }
-                    } else {
-                        return true;
+                if (token.tag == Tag.MINUS || token.tag == Tag.PLUS || token.tag == Tag.OR) {
+                    readNextToken();
+                    if (!T()) {
+                        exitError();
                     }
-                } while (true);
-            } else {
-                exitError();
-            }
+                } else {
+                    return true;
+                }
+            } while (true);
+        } else {
+            exitError();
         }
         return false;
+
     }
 
     boolean T() {
         if (F()) {
-            readNextToken();
             do {
+                readNextToken();
                 if (token.tag == Tag.MULTIPLY || token.tag == Tag.SLASH_FORWARD || token.tag == Tag.AND
                         || token.tag == Tag.DIV || token.tag == Tag.MOD) {
                     readNextToken();
@@ -213,19 +338,25 @@ public class Parser {
         } else if (!F()) {
             return true;
 
-        } else if (token.tag == Tag.OPEN_PARENTHESIS) {
-            return P();
+        } else if (P()) {
+            return true;
 
         } else if (token.tag == Tag.INT) {
             readNextToken();
-            return P();
+            if (P()) {
+                return true;
+            } else {
+                exitError();
+            }
 
         } else if (token.tag == Tag.FLOAT) {
             readNextToken();
-            return P();
+            if (P()) {
+                return true;
+            } else {
+                exitError();
+            }
 
-        } else {
-            exitError();
         }
 
         return false;
