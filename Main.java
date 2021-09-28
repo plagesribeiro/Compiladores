@@ -912,19 +912,6 @@ class Lexer {
             return true;
         return false;
     }
-
-    public static void main(String[] args) throws Exception {
-        Lexer lexer = new Lexer();
-
-        Token t;
-        do {
-            t = lexer.scan();
-            if (t != null) {
-                System.out.println(t.toString());
-            }
-        } while (t != null);
-        // lexer.st.listTable();
-    }
 }
 
 class SymbolTable {
