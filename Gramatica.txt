@@ -1,0 +1,24 @@
+//S -> {Declaracao | Comandos} EOF
+
+//Declaracao -> (("char" | "string" | "int" | "float") Lista-de-ids ";" | "const" ID "=" Exp ";")
+//Comandos -> "{" Comando* "}" | Comando
+
+//Comando -> (Atribuicao | Repeticao | Teste | Nulo | Leitura | Escrita) ";"
+
+
+//Lista-de-ids -> ID {"," ID}*
+
+
+//Atribuicao -> ID ["["Exp"]"] "<-" Exp
+//Repeticao -> while Exp Comandos
+//Teste -> if Exp Comandos else Comandos
+//Leitura -> readln"(" ID | Exp ")"
+//Escrita -> (write|writeln) "("Exp {"," Exp}*")"
+
+
+//Exp -> ExpS [Comp ExpS]
+//Comp -> (= | != | < | > | <= | >=)
+//ExpS -> [+|-] T {(+|-|"||") T}
+//T -> F {(*|/|&&|div|mod) F}
+//F -> ID["[" Exp "]"] | const | !F | P | "int" P | "float" P
+//P -> "("Exp")"
