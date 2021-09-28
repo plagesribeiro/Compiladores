@@ -4,10 +4,8 @@ public class Lexer {
     private String lexeme;
     public int line;
     private int c;
-    private int last;
     public SymbolTable st;
     private int state;
-    private boolean finalState = false;
     private boolean giveBack;
 
     public Lexer() {
@@ -61,7 +59,7 @@ public class Lexer {
         while (state != 5) {
             if (!giveBack && state != 5) {
                 c = readch();
-                if (c == '\n' && state != 6) {
+                if (c == '\n') {
                     line++;
                 }
             }
@@ -112,9 +110,6 @@ public class Lexer {
                         lexeme += (char) c;
                         state = 4;
                     } else {
-                        if (c != -1) {
-                            lexeme += (char) c;
-                        }
                         errorNotIdentifiedLexeme(lexeme);
                         return null;
                     }
@@ -129,17 +124,15 @@ public class Lexer {
                     } else if (c == -1) {
                         state = 5;
                     } else {
-                        if (c != -1) {
-                            lexeme += (char) c;
-                        }
                         errorNotIdentifiedLexeme(lexeme);
                         return null;
                     }
+                    break;
                 case 6:
                     if (c == -1) {
                         errorEOFNotExpected();
                         return null;
-                    } else if (isAsciiExt(c)) {
+                    } else if (isAsciiExt(c) && c != '\n') {
                         state = 7;
                         lexeme += (char) c;
                     } else {
@@ -155,7 +148,6 @@ public class Lexer {
                         state = 5;
                         lexeme += (char) c;
                     } else {
-                        lexeme += (char) c;
                         errorNotIdentifiedLexeme(lexeme);
                         return null;
                     }
@@ -164,20 +156,28 @@ public class Lexer {
                     if (c == -1) {
                         errorEOFNotExpected();
                         return null;
+                    } else if (c == '\n') {
+                        errorInvalidCharacter();
+                        return null;
                     }
                     int count = 0;
                     for (; (char) c != '"'; c = readch()) {
-                        if (c != '\n' || c != '"' || c != '$') {
-                            if (isValidStr(c) && count <= 254) {
+                        if (c != '\n' && c != '"' && c != '$') {
+                            if (c >= 0 && c <= 255 && count <= 254) {
                                 lexeme += (char) c;
                             } else {
-                                if (count > 254) {
-                                    errorNotIdentifiedLexeme(lexeme);
-                                } else {
+                                if (c == -1) {
+                                    errorEOFNotExpected();
+                                } else if (!(c >= 0 && c <= 255)){
                                     errorInvalidCharacter();
-                                }
+                                } else if (count > 254) {
+                                    errorNotIdentifiedLexeme(lexeme);
+                                } 
                                 return null;
                             }
+                        } else if (c == '\n' || c == '$') {
+                            errorInvalidCharacter();
+                            return null;
                         }
                         count++;
                     }
@@ -226,7 +226,6 @@ public class Lexer {
                         lexeme += (char) c;
                         state = 12;
                     } else {
-                        lexeme += (char) c;
                         errorNotIdentifiedLexeme(lexeme);
                         return null;
                     }
@@ -311,18 +310,12 @@ public class Lexer {
                         lexeme += (char) c;
                         state = 5;
                     } else {
-                        if (c != -1) {
-                            lexeme += (char) c;
-                        }
                         errorNotIdentifiedLexeme(lexeme);
                         return null;
                     }
                     break;
                 case 18:
                     if (lexeme.length() > 32) {
-                        if (c == '\n') {
-                            line--;
-                        }
                         errorNotIdentifiedLexeme(lexeme);
                         return null;
                     } else if (isLetter((char) c) || isDigit((char) c) || (char) c == '.' || (char) c == '_') {
@@ -333,7 +326,7 @@ public class Lexer {
                     } else if (c != -1) {
                         errorInvalidCharacter();
                         return null;
-                    }
+                    } 
                     break;
                 case 19:
                     if (c == -1) {
@@ -395,7 +388,7 @@ public class Lexer {
         if (t == null) {
             if (isLetter(lexeme.charAt(0)) || lexeme.charAt(0) == '_')
                 t = st.insertToken(lexeme, new Token(lexeme, Tag.ID));
-            else if (lexeme.charAt(0) == '\'' || (lexeme.charAt(0) == '0' && lexeme.charAt(1) == 'x'))
+            else if (lexeme.charAt(0) == '\'' || (lexeme.length() > 2) && (lexeme.charAt(0) == '0' && lexeme.charAt(1) == 'x'))
                 t = st.insertToken(lexeme, new Token(lexeme, Tag.VALUE_CHAR));
             else if (lexeme.charAt(0) == '"')
                 t = st.insertToken(lexeme, new Token(lexeme, Tag.VALUE_STRING));
@@ -476,6 +469,8 @@ public class Lexer {
     }
 
     void errorNotIdentifiedLexeme(String lexeme) {
+        if (c == '\n')
+            line--;
         System.out.print(line + "\nlexema nao identificado [" + lexeme + "].");
     }
 
