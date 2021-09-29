@@ -821,7 +821,7 @@ class Lexer {
         for (c = readch();; c = readch()) {
             if ((char) c == ' ' || c == '\t') {
                 continue;
-            } else if ((char) c == '\n') {
+            } else if ((char) c == '\n' || (char) c == '\r') {
                 line++;
             } else {
                 break;
@@ -868,13 +868,13 @@ class Lexer {
     }
 
     void errorNotIdentifiedLexeme(String lexeme) {
-        if (c == '\n')
+        if (c == '\n' || c == '\r')
             line--;
         System.out.print(line + "\nlexema nao identificado [" + lexeme + "].");
     }
 
     void errorInvalidCharacter() {
-        if (c == '\n')
+        if (c == '\n' || c == '\r')
             line--;
         System.out.print(line + "\ncaractere invalido.");
     }
