@@ -14,7 +14,9 @@
         {
             "args": [
                 "<",
-                "input"
+                "input",
+                ">",
+                "output.txt"
             ],
             "type": "java",
             "name": "Launch Current File",

@@ -5,8 +5,8 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws IOException {
         // runLexerDebug();
-        runLexer();
-        // runParser();
+        // runLexer();
+        runParser();
     }
 
     public static void runParser() throws IOException {
@@ -54,8 +54,11 @@ class Parser {
     }
 
     void exitError() {
-        System.out.print(lexer.line + "\ntoken nao esperado [" + token.lexeme + "].");
-        System.out.println("I'm in line #" + new Exception().getStackTrace()[1].getLineNumber());
+        
+        String lexeme = token.lexeme.replace("\r", "");
+        System.out.println(lexer.line + "\ntoken nao esperado ["+lexeme+"].");
+
+        //System.out.println("I'm in line #" + new Exception().getStackTrace()[1].getLineNumber());
         System.exit(1);
     }
 
@@ -480,7 +483,7 @@ class Lexer {
         while (state != 5) {
             if (!giveBack && state != 5) {
                 c = readch();
-                if (c == '\n') {
+                if ((char) c == '\n') {
                     line++;
                 }
             }
@@ -557,7 +560,7 @@ class Lexer {
                     if (c == -1) {
                         errorEOFNotExpected();
                         return null;
-                    } else if (isAsciiExt(c) && c != '\n') {
+                    } else if (isAsciiExt(c) && (c != '\n')) {
                         state = 7;
                         lexeme += (char) c;
                     } else {
@@ -587,7 +590,7 @@ class Lexer {
                     }
                     int count = 0;
                     for (; (char) c != '"'; c = readch()) {
-                        if (c != '\n' && c != '"' && c != '$') {
+                        if ((c != '\n') && c != '"' && c != '$') {
                             if (c >= 0 && c <= 255 && count <= 254) {
                                 lexeme += (char) c;
                             } else {
@@ -793,7 +796,7 @@ class Lexer {
         lexeme = "";
         state = 1;
         if (giveBack) {
-            if ((char) c != '\n' && (char) c != ' ') {
+            if ((c != '\n') && (char) c != ' ') {
                 lexeme += (char) c;
                 state = checkStateFrom1((char) c);
             }
@@ -828,7 +831,7 @@ class Lexer {
 
     private int readBlank() throws IOException {
         for (c = readch();; c = readch()) {
-            if ((char) c == ' ' || c == '\t') {
+            if ((char) c == ' ' || c == '\t' || c == '\r') {
                 continue;
             } else if ((char) c == '\n') {
                 line++;
