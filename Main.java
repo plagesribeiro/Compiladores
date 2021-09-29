@@ -384,7 +384,6 @@ class Parser {
         if (token.tag == Tag.OPEN_PARENTHESIS) {
             readNextToken();
             if (Expressao()) {
-                readNextToken();
                 if (token.tag == Tag.CLOSE_PARENTHESIS) {
                     return true;
                 } else {
@@ -393,8 +392,6 @@ class Parser {
             } else {
                 exitError();
             }
-        } else {
-            exitError();
         }
         return false;
     }
