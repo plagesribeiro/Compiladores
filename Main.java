@@ -2,9 +2,25 @@ import java.util.Hashtable;
 import java.io.IOException;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
+        runLexer();
+        // runParser();
+    }
+
+    public static void runParser() throws IOException {
         Parser p = new Parser();
         p.S();
+    }
+
+    public static void runLexer() throws IOException {
+        Lexer lexer = new Lexer();
+        Token t;
+        do {
+            t = lexer.scan();
+            if (t != null) {
+                System.out.println(t.toString());
+            }
+        } while (t != null);
     }
 }
 
