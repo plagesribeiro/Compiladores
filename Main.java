@@ -29,6 +29,7 @@ class Parser {
 
     void exitError() {
         System.out.print(lexer.line + "\ntoken nao esperado [" + token.lexeme + "].");
+        System.out.println("I'm in line #" + new Exception().getStackTrace()[1].getLineNumber());
         System.exit(1);
     }
 
@@ -95,8 +96,8 @@ class Parser {
     }
 
     boolean Comando() {
-        if (Atribuicao() || Repeticao() || Teste() || Leitura() || Escrita()) {
-            readNextToken();
+        if (!Atribuicao() && !Repeticao() && !Teste() && !Leitura() && !Escrita()) {
+            return true;
         }
         if (token.tag == Tag.SEMICOLON) {
             return true;
@@ -118,7 +119,6 @@ class Parser {
                 } else {
                     return true;
                 }
-                readNextToken();
             } while (true);
         }
         return false;
@@ -149,7 +149,6 @@ class Parser {
             if (token.tag == Tag.OPEN_BRACKET) {
                 readNextToken();
                 if (Expressao()) {
-                    readNextToken();
                     if (token.tag == Tag.CLOSE_BRACKET) {
                         return true;
                     } else {
@@ -219,6 +218,7 @@ class Parser {
                 if (token.tag == Tag.ID || Expressao()) {
                     readNextToken();
                     if (token.tag == Tag.CLOSE_PARENTHESIS) {
+                        readNextToken();
                         return true;
                     } else {
                         exitError();
@@ -247,6 +247,7 @@ class Parser {
                             }
                         } else {
                             if (token.tag == Tag.CLOSE_PARENTHESIS) {
+                                readNextToken();
                                 return true;
                             } else {
                                 exitError();
@@ -334,7 +335,6 @@ class Parser {
             if (token.tag == Tag.OPEN_BRACKET) {
                 readNextToken();
                 if (Expressao()) {
-                    readNextToken();
                     if (token.tag == Tag.CLOSE_BRACKET) {
                         readNextToken();
                         return true;
@@ -352,9 +352,6 @@ class Parser {
                 || token.tag == Tag.VALUE_INT) {
             readNextToken();
             return true;
-
-            // } else if (!F()) {
-            // return true;
 
         } else if (P()) {
             return true;
