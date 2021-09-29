@@ -60,7 +60,6 @@ class Parser {
                 if (token.tag == Tag.EQ) {
                     readNextToken();
                     if (Expressao()) {
-                        readNextToken();
                         if (token.tag == Tag.SEMICOLON) {
                             return true;
                         } else {
@@ -109,18 +108,37 @@ class Parser {
     }
 
     boolean ListaDeIds() {
-        if (token.tag == Tag.ID) {
+        if (Di()) {
             do {
-                readNextToken();
                 if (token.tag == Tag.COMMA) {
                     readNextToken();
-                    if (!(token.tag == Tag.ID)) {
+                    if (!Di()) {
                         exitError();
                     }
                 } else {
                     return true;
                 }
+                readNextToken();
             } while (true);
+        }
+        return false;
+    }
+
+    boolean Di(){
+        if(token.tag == Tag.ID){
+            readNextToken();
+            if(token.tag == Tag.ASSIGN){
+                readNextToken();
+                if(token.tag == Tag.VALUE_CHAR || token.tag == Tag.VALUE_FLOAT || token.tag == Tag.VALUE_STRING
+                || token.tag == Tag.VALUE_INT){
+                    readNextToken();
+                    return true;
+                } else {
+                    exitError();
+                }
+            }
+            return true;
+
         }
         return false;
     }
@@ -223,7 +241,6 @@ class Parser {
                 readNextToken();
                 if (Expressao()) {
                     do {
-                        readNextToken();
                         if (token.tag == Tag.COMMA) {
                             readNextToken();
                             if (!Expressao()) {
@@ -249,7 +266,6 @@ class Parser {
 
     boolean Expressao() {
         if (ExpS()) {
-            readNextToken();
             if (Comp()) {
                 readNextToken();
                 if (ExpS()) {
@@ -278,7 +294,6 @@ class Parser {
         }
         if (T()) {
             do {
-                readNextToken();
                 if (token.tag == Tag.MINUS || token.tag == Tag.PLUS || token.tag == Tag.OR) {
                     readNextToken();
                     if (!T()) {
