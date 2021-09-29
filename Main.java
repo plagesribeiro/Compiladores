@@ -43,6 +43,14 @@ class Parser {
         this.lexer = new Lexer();
     }
 
+    void CasaToken(byte esperado){
+        if(token.tag == esperado){
+            readNextToken();
+        } else {
+            exitError();
+        }
+    }
+
     void readNextToken() {
         try {
             token = lexer.scan();
@@ -74,10 +82,10 @@ class Parser {
     }
 
     boolean Declaracao() {
-        if (token.tag == Tag.CHAR || token.tag == Tag.INT || token.tag == Tag.STRING || token.tag == Tag.FLOAT) {
+        if (token.tag == Token.CHAR || token.tag == Token.INT || token.tag == Token.STRING || token.tag == Token.FLOAT) {
             readNextToken();
             if (ListaDeIds()) {
-                if (token.tag == Tag.SEMICOLON) {
+                if (token.tag == Token.SEMICOLON) {
                     return true;
                 } else {
                     exitError();
@@ -85,14 +93,14 @@ class Parser {
             } else {
                 exitError();
             }
-        } else if (token.tag == Tag.CONST) {
+        } else if (token.tag == Token.CONST) {
             readNextToken();
-            if (token.tag == Tag.ID) {
+            if (token.tag == Token.ID) {
                 readNextToken();
-                if (token.tag == Tag.EQ) {
+                if (token.tag == Token.EQ) {
                     readNextToken();
                     if (Expressao()) {
-                        if (token.tag == Tag.SEMICOLON) {
+                        if (token.tag == Token.SEMICOLON) {
                             return true;
                         } else {
                             exitError();
@@ -111,11 +119,11 @@ class Parser {
     }
 
     boolean Comandos() {
-        if (token.tag == Tag.OPEN_BRACE) {
+        if (token.tag == Token.OPEN_BRACE) {
             do {
                 readNextToken();
             } while (Comando());
-            if (token.tag == Tag.CLOSE_BRACE) {
+            if (token.tag == Token.CLOSE_BRACE) {
                 return true;
             } else {
                 exitError();
@@ -130,7 +138,7 @@ class Parser {
         if (!Atribuicao() && !Repeticao() && !Teste() && !Leitura() && !Escrita()) {
             return true;
         }
-        if (token.tag == Tag.SEMICOLON) {
+        if (token.tag == Token.SEMICOLON) {
             return true;
         } else {
             exitError();
@@ -142,7 +150,7 @@ class Parser {
     boolean ListaDeIds() {
         if (Di()) {
             do {
-                if (token.tag == Tag.COMMA) {
+                if (token.tag == Token.COMMA) {
                     readNextToken();
                     if (!Di()) {
                         exitError();
@@ -156,12 +164,12 @@ class Parser {
     }
 
     boolean Di() {
-        if (token.tag == Tag.ID) {
+        if (token.tag == Token.ID) {
             readNextToken();
-            if (token.tag == Tag.ASSIGN) {
+            if (token.tag == Token.ASSIGN) {
                 readNextToken();
-                if (token.tag == Tag.VALUE_CHAR || token.tag == Tag.VALUE_FLOAT || token.tag == Tag.VALUE_STRING
-                        || token.tag == Tag.VALUE_INT) {
+                if (token.tag == Token.VALUE_CHAR || token.tag == Token.VALUE_FLOAT || token.tag == Token.VALUE_STRING
+                        || token.tag == Token.VALUE_INT) {
                     readNextToken();
                     return true;
                 } else {
@@ -175,12 +183,12 @@ class Parser {
     }
 
     boolean Atribuicao() {
-        if (token.tag == Tag.ID) {
+        if (token.tag == Token.ID) {
             readNextToken();
-            if (token.tag == Tag.OPEN_BRACKET) {
+            if (token.tag == Token.OPEN_BRACKET) {
                 readNextToken();
                 if (Expressao()) {
-                    if (token.tag == Tag.CLOSE_BRACKET) {
+                    if (token.tag == Token.CLOSE_BRACKET) {
                         return true;
                     } else {
                         exitError();
@@ -189,7 +197,7 @@ class Parser {
                     exitError();
                 }
             }
-            if (token.tag == Tag.ASSIGN) {
+            if (token.tag == Token.ASSIGN) {
                 readNextToken();
                 if (Expressao()) {
                     return true;
@@ -204,7 +212,7 @@ class Parser {
     }
 
     boolean Repeticao() {
-        if (token.tag == Tag.WHILE) {
+        if (token.tag == Token.WHILE) {
             readNextToken();
             if (Expressao()) {
                 if (Comandos()) {
@@ -220,11 +228,11 @@ class Parser {
     }
 
     boolean Teste() {
-        if (token.tag == Tag.IF) {
+        if (token.tag == Token.IF) {
             readNextToken();
             if (Comandos()) {
                 readNextToken();
-                if (token.tag == Tag.ELSE) {
+                if (token.tag == Token.ELSE) {
                     readNextToken();
                     if (Comandos()) {
                         return true;
@@ -242,13 +250,13 @@ class Parser {
     }
 
     boolean Leitura() {
-        if (token.tag == Tag.READLN) {
+        if (token.tag == Token.READLN) {
             readNextToken();
-            if (token.tag == Tag.OPEN_PARENTHESIS) {
+            if (token.tag == Token.OPEN_PARENTHESIS) {
                 readNextToken();
-                if (token.tag == Tag.ID || Expressao()) {
+                if (token.tag == Token.ID || Expressao()) {
                     readNextToken();
-                    if (token.tag == Tag.CLOSE_PARENTHESIS) {
+                    if (token.tag == Token.CLOSE_PARENTHESIS) {
                         readNextToken();
                         return true;
                     } else {
@@ -265,19 +273,19 @@ class Parser {
     }
 
     boolean Escrita() {
-        if (token.tag == Tag.WRITE || token.tag == Tag.WRITELN) {
+        if (token.tag == Token.WRITE || token.tag == Token.WRITELN) {
             readNextToken();
-            if (token.tag == Tag.OPEN_PARENTHESIS) {
+            if (token.tag == Token.OPEN_PARENTHESIS) {
                 readNextToken();
                 if (Expressao()) {
                     do {
-                        if (token.tag == Tag.COMMA) {
+                        if (token.tag == Token.COMMA) {
                             readNextToken();
                             if (!Expressao()) {
                                 exitError();
                             }
                         } else {
-                            if (token.tag == Tag.CLOSE_PARENTHESIS) {
+                            if (token.tag == Token.CLOSE_PARENTHESIS) {
                                 readNextToken();
                                 return true;
                             } else {
@@ -315,17 +323,17 @@ class Parser {
     }
 
     boolean Comp() {
-        return token.tag == Tag.EQ || token.tag == Tag.NOT_EQUAL || token.tag == Tag.LOWER || token.tag == Tag.GREATER
-                || token.tag == Tag.LOWER_EQUAL || token.tag == Tag.GREATER_EQUAL;
+        return token.tag == Token.EQ || token.tag == Token.NOT_EQUAL || token.tag == Token.LOWER || token.tag == Token.GREATER
+                || token.tag == Token.LOWER_EQUAL || token.tag == Token.GREATER_EQUAL;
     }
 
     boolean ExpS() {
-        if (token.tag == Tag.MINUS || token.tag == Tag.PLUS) {
+        if (token.tag == Token.MINUS || token.tag == Token.PLUS) {
             readNextToken();
         }
         if (T()) {
             do {
-                if (token.tag == Tag.MINUS || token.tag == Tag.PLUS || token.tag == Tag.OR) {
+                if (token.tag == Token.MINUS || token.tag == Token.PLUS || token.tag == Token.OR) {
                     readNextToken();
                     if (!T()) {
                         exitError();
@@ -344,8 +352,8 @@ class Parser {
     boolean T() {
         if (F()) {
             do {
-                if (token.tag == Tag.MULTIPLY || token.tag == Tag.SLASH_FORWARD || token.tag == Tag.AND
-                        || token.tag == Tag.DIV || token.tag == Tag.MOD) {
+                if (token.tag == Token.MULTIPLY || token.tag == Token.SLASH_FORWARD || token.tag == Token.AND
+                        || token.tag == Token.DIV || token.tag == Token.MOD) {
                     readNextToken();
                     if (!F()) {
                         exitError();
@@ -361,12 +369,12 @@ class Parser {
     }
 
     boolean F() {
-        if (token.tag == Tag.ID) {
+        if (token.tag == Token.ID) {
             readNextToken();
-            if (token.tag == Tag.OPEN_BRACKET) {
+            if (token.tag == Token.OPEN_BRACKET) {
                 readNextToken();
                 if (Expressao()) {
-                    if (token.tag == Tag.CLOSE_BRACKET) {
+                    if (token.tag == Token.CLOSE_BRACKET) {
                         readNextToken();
                         return true;
                     } else {
@@ -379,15 +387,15 @@ class Parser {
                 return true;
             }
 
-        } else if (token.tag == Tag.VALUE_CHAR || token.tag == Tag.VALUE_FLOAT || token.tag == Tag.VALUE_STRING
-                || token.tag == Tag.VALUE_INT) {
+        } else if (token.tag == Token.VALUE_CHAR || token.tag == Token.VALUE_FLOAT || token.tag == Token.VALUE_STRING
+                || token.tag == Token.VALUE_INT) {
             readNextToken();
             return true;
 
         } else if (P()) {
             return true;
 
-        } else if (token.tag == Tag.INT) {
+        } else if (token.tag == Token.INT) {
             readNextToken();
             if (P()) {
                 return true;
@@ -395,7 +403,7 @@ class Parser {
                 exitError();
             }
 
-        } else if (token.tag == Tag.FLOAT) {
+        } else if (token.tag == Token.FLOAT) {
             readNextToken();
             if (P()) {
                 return true;
@@ -409,10 +417,10 @@ class Parser {
     }
 
     boolean P() {
-        if (token.tag == Tag.OPEN_PARENTHESIS) {
+        if (token.tag == Token.OPEN_PARENTHESIS) {
             readNextToken();
             if (Expressao()) {
-                if (token.tag == Tag.CLOSE_PARENTHESIS) {
+                if (token.tag == Token.CLOSE_PARENTHESIS) {
                     readNextToken();
                     return true;
                 } else {
@@ -441,43 +449,43 @@ class Lexer {
         this.state = 1;
         this.giveBack = false;
         this.st = new SymbolTable();
-
+      
         // Insere as palavras reservadas na Tabela de Simbolos
-        this.st.insertToken("const", new Token("const", Tag.CONST));
-        this.st.insertToken("int", new Token("int", Tag.INT));
-        this.st.insertToken("char", new Token("char", Tag.INT));
-        this.st.insertToken("while", new Token("while", Tag.WHILE));
-        this.st.insertToken("if", new Token("if", Tag.IF));
-        this.st.insertToken("float", new Token("float", Tag.FLOAT));
-        this.st.insertToken("else", new Token("else", Tag.ELSE));
-        this.st.insertToken("&&", new Token("&&", Tag.AND));
-        this.st.insertToken("||", new Token("||", Tag.OR));
-        this.st.insertToken("!", new Token("!", Tag.NOT));
-        this.st.insertToken("<-", new Token("<-", Tag.ASSIGN));
-        this.st.insertToken("=", new Token("=", Tag.EQ));
-        this.st.insertToken("(", new Token("(", Tag.OPEN_PARENTHESIS));
-        this.st.insertToken(")", new Token(")", Tag.CLOSE_PARENTHESIS));
-        this.st.insertToken("<", new Token("<", Tag.GREATER));
-        this.st.insertToken(">", new Token(">", Tag.LOWER));
-        this.st.insertToken("!=", new Token("!=", Tag.NOT_EQUAL));
-        this.st.insertToken(">=", new Token(">=", Tag.GREATER_EQUAL));
-        this.st.insertToken("<=", new Token("<=", Tag.LOWER_EQUAL));
-        this.st.insertToken(",", new Token(",", Tag.COMMA));
-        this.st.insertToken("+", new Token("+", Tag.PLUS));
-        this.st.insertToken("-", new Token("-", Tag.MINUS));
-        this.st.insertToken("*", new Token("*", Tag.MULTIPLY));
-        this.st.insertToken("/", new Token("/", Tag.SLASH_FORWARD));
-        this.st.insertToken(";", new Token(";", Tag.SEMICOLON));
-        this.st.insertToken("{", new Token("{", Tag.OPEN_BRACE));
-        this.st.insertToken("}", new Token("}", Tag.CLOSE_BRACE));
-        this.st.insertToken("readln", new Token("readln", Tag.READLN));
-        this.st.insertToken("div", new Token("div", Tag.DIV));
-        this.st.insertToken("write", new Token("write", Tag.WRITE));
-        this.st.insertToken("writeln", new Token("writeln", Tag.WRITELN));
-        this.st.insertToken("mod", new Token("mod", Tag.MOD));
-        this.st.insertToken("[", new Token("[", Tag.OPEN_BRACKET));
-        this.st.insertToken("]", new Token("]", Tag.CLOSE_BRACKET));
-        this.st.insertToken("string", new Token("string", Tag.STRING));
+        this.st.insertToken("const", new Token("const", Token.CONST));
+        this.st.insertToken("int", new Token("int", Token.INT));
+        this.st.insertToken("char", new Token("char", Token.INT));
+        this.st.insertToken("while", new Token("while", Token.WHILE));
+        this.st.insertToken("if", new Token("if", Token.IF));
+        this.st.insertToken("float", new Token("float", Token.FLOAT));
+        this.st.insertToken("else", new Token("else", Token.ELSE));
+        this.st.insertToken("&&", new Token("&&", Token.AND));
+        this.st.insertToken("||", new Token("||", Token.OR));
+        this.st.insertToken("!", new Token("!", Token.NOT));
+        this.st.insertToken("<-", new Token("<-", Token.ASSIGN));
+        this.st.insertToken("=", new Token("=", Token.EQ));
+        this.st.insertToken("(", new Token("(", Token.OPEN_PARENTHESIS));
+        this.st.insertToken(")", new Token(")", Token.CLOSE_PARENTHESIS));
+        this.st.insertToken("<", new Token("<", Token.GREATER));
+        this.st.insertToken(">", new Token(">", Token.LOWER));
+        this.st.insertToken("!=", new Token("!=", Token.NOT_EQUAL));
+        this.st.insertToken(">=", new Token(">=", Token.GREATER_EQUAL));
+        this.st.insertToken("<=", new Token("<=", Token.LOWER_EQUAL));
+        this.st.insertToken(",", new Token(",", Token.COMMA));
+        this.st.insertToken("+", new Token("+", Token.PLUS));
+        this.st.insertToken("-", new Token("-", Token.MINUS));
+        this.st.insertToken("*", new Token("*", Token.MULTIPLY));
+        this.st.insertToken("/", new Token("/", Token.SLASH_FORWARD));
+        this.st.insertToken(";", new Token(";", Token.SEMICOLON));
+        this.st.insertToken("{", new Token("{", Token.OPEN_BRACE));
+        this.st.insertToken("}", new Token("}", Token.CLOSE_BRACE));
+        this.st.insertToken("readln", new Token("readln", Token.READLN));
+        this.st.insertToken("div", new Token("div", Token.DIV));
+        this.st.insertToken("write", new Token("write", Token.WRITE));
+        this.st.insertToken("writeln", new Token("writeln", Token.WRITELN));
+        this.st.insertToken("mod", new Token("mod", Token.MOD));
+        this.st.insertToken("[", new Token("[", Token.OPEN_BRACKET));
+        this.st.insertToken("]", new Token("]", Token.CLOSE_BRACKET));
+        this.st.insertToken("string", new Token("string", Token.STRING));
     }
 
     // Le proximo caractere
@@ -761,16 +769,16 @@ class Lexer {
         Token t = st.findToken(lexeme);
         if (t == null) {
             if (isLetter(lexeme.charAt(0)) || lexeme.charAt(0) == '_')
-                t = st.insertToken(lexeme, new Token(lexeme, Tag.ID)); // Token e ID
+                t = st.insertToken(lexeme, new Token(lexeme, Token.ID)); // Token e ID
             else if (lexeme.charAt(0) == '\''
                     || (lexeme.length() > 2) && (lexeme.charAt(0) == '0' && lexeme.charAt(1) == 'x'))
-                t = st.insertToken(lexeme, new Token(lexeme, Tag.VALUE_CHAR)); // Token e char
+                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_CHAR)); // Token e char
             else if (lexeme.charAt(0) == '"')
-                t = st.insertToken(lexeme, new Token(lexeme, Tag.VALUE_STRING)); // Token e String
+                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_STRING)); // Token e String
             else if (lexeme.contains("."))
-                t = st.insertToken(lexeme, new Token(lexeme, Tag.VALUE_FLOAT)); // Token e float
+                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_FLOAT)); // Token e float
             else
-                t = st.insertToken(lexeme, new Token(lexeme, Tag.VALUE_INT)); // Token e int
+                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_INT)); // Token e int
         }
 
         lexeme = ""; // Reseta valor atual de lexema para leitura do proximo token
@@ -949,29 +957,6 @@ class SymbolTable {
 
 // Classe Token
 class Token {
-    public String lexeme;
-    public byte tag;
-    private byte size;
-
-    // Construtor com parametro
-    public Token(String lexeme, byte tag) {
-        this.lexeme = lexeme;
-        this.tag = tag;
-    }
-
-    // Construtor sem parametro
-    public Token() {
-        this.lexeme = "";
-        this.tag = 0;
-    }
-
-    // Escreve lexema
-    public String toString() {
-        return "" + lexeme;
-    }
-}
-
-class Tag {
     public final static byte CONST = 1;
     public final static byte INT = 2;
     public final static byte CHAR = 3;
@@ -1012,4 +997,22 @@ class Tag {
     public final static byte VALUE_STRING = 39;
     public final static byte VALUE_INT = 40;
     public final static byte VALUE_FLOAT = 41;
+
+    public String lexeme;
+    public byte tag;
+    private byte size;
+
+    public Token(String lexeme, byte tag) {
+        this.lexeme = lexeme;
+        this.tag = tag;
+    }
+
+    public Token() {
+        this.lexeme = "";
+        this.tag = 0;
+    }
+
+    public String toString() {
+        return "" + lexeme;
+    }
 }
