@@ -54,11 +54,12 @@ class Parser {
     }
 
     void exitError() {
-        
-        String lexeme = token.lexeme.replace("\r", "");
-        System.out.println(lexer.line + "\ntoken nao esperado ["+lexeme+"].");
 
-        //System.out.println("I'm in line #" + new Exception().getStackTrace()[1].getLineNumber());
+        String lexeme = token.lexeme;
+        System.out.println(lexer.line + "\ntoken nao esperado [" + lexeme + "].");
+
+        // System.out.println("I'm in line #" + new
+        // Exception().getStackTrace()[1].getLineNumber());
         System.exit(1);
     }
 
@@ -525,7 +526,7 @@ class Lexer {
                     } else if (isDigit((char) c)) {
                         lexeme += (char) c;
                         state = 10;
-                    } else if ((char) c != '\n') {
+                    } else {
                         state = 5;
                         giveBack = true;
                     }
@@ -560,7 +561,7 @@ class Lexer {
                     if (c == -1) {
                         errorEOFNotExpected();
                         return null;
-                    } else if (isAsciiExt(c) && (c != '\n')) {
+                    } else if (isAsciiExt(c) && c != '\n' && c != '\r') {
                         state = 7;
                         lexeme += (char) c;
                     } else {
@@ -590,7 +591,7 @@ class Lexer {
                     }
                     int count = 0;
                     for (; (char) c != '"'; c = readch()) {
-                        if ((c != '\n') && c != '"' && c != '$') {
+                        if ((c != '\n') && c != '"' && c != '$' && c != '\r') {
                             if (c >= 0 && c <= 255 && count <= 254) {
                                 lexeme += (char) c;
                             } else {
@@ -618,12 +619,11 @@ class Lexer {
                     } else if ((char) c == '.') {
                         state = 11;
                         lexeme += (char) c;
-                    } else if (isValid((char) c)) {
+                    } else {
                         giveBack = true;
                         state = 5;
-                    } else if (c == -1) {
-                        state = 5;
                     }
+
                     break;
                 case 10:
                     if (isDigit((char) c)) {
@@ -631,14 +631,9 @@ class Lexer {
                     } else if ((char) c == '.') {
                         lexeme += (char) c;
                         state = 11;
-                    } else if (isValid((char) c) || (c == 1)) {
+                    } else {
                         giveBack = true;
                         state = 5;
-                    } else if (c == -1) {
-                        state = 5;
-                    } else {
-                        errorInvalidCharacter();
-                        return null;
                     }
                     break;
                 case 11:
@@ -719,12 +714,12 @@ class Lexer {
                         return null;
                     } else if (isLetter((char) c) || isDigit((char) c) || (char) c == '.' || (char) c == '_') {
                         lexeme += (char) c;
-                    } else if (isValid((char) c) || c == -1) {
-                        giveBack = true;
-                        state = 5;
                     } else if (c != -1) {
                         errorInvalidCharacter();
                         return null;
+                    } else {
+                        giveBack = true;
+                        state = 5;
                     }
                     break;
                 case 19:
@@ -796,7 +791,7 @@ class Lexer {
         lexeme = "";
         state = 1;
         if (giveBack) {
-            if ((c != '\n') && (char) c != ' ') {
+            if ((c != '\n') && (char) c != ' ' && (char) c != '\r') {
                 lexeme += (char) c;
                 state = checkStateFrom1((char) c);
             }
@@ -821,6 +816,13 @@ class Lexer {
         return true;
     }
 
+    private boolean isBlank(int c) {
+        if (c == '\n' || c == '\r' || c == '\t' || c == ' ') {
+            return true;
+        }
+        return false;
+    }
+
     private boolean isHexValid(char c) {
         String hex = "0123456789abcdefABCDEF";
         if (hex.contains(Character.toString(c))) {
@@ -833,7 +835,7 @@ class Lexer {
         for (c = readch();; c = readch()) {
             if ((char) c == ' ' || c == '\t' || c == '\r') {
                 continue;
-            } else if ((char) c == '\n' || (char) c == '\r') {
+            } else if ((char) c == '\n') {
                 line++;
             } else {
                 break;
@@ -845,7 +847,7 @@ class Lexer {
     private int checkStateFrom1(int c) {
         if (isInvalidTokenBegin((char) c)) {
             return 0;
-        } else if ((char) c == ' ') {
+        } else if ((char) c == ' ' || (char) c == '\r') {
             return 1;
         } else if ((char) c == '0') { // Le char em hexa ou números iniciados em 0
             return 2;
@@ -880,13 +882,13 @@ class Lexer {
     }
 
     void errorNotIdentifiedLexeme(String lexeme) {
-        if (c == '\n' || c == '\r')
+        if (c == '\n')
             line--;
         System.out.print(line + "\nlexema nao identificado [" + lexeme + "].");
     }
 
     void errorInvalidCharacter() {
-        if (c == '\n' || c == '\r')
+        if (c == '\n')
             line--;
         System.out.print(line + "\ncaractere invalido.");
     }
