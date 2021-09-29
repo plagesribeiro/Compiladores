@@ -45,7 +45,6 @@ class Parser {
         if (token.tag == Tag.CHAR || token.tag == Tag.INT || token.tag == Tag.STRING || token.tag == Tag.FLOAT) {
             readNextToken();
             if (ListaDeIds()) {
-                readNextToken();
                 if (token.tag == Tag.SEMICOLON) {
                     return true;
                 } else {
