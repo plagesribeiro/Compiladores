@@ -796,32 +796,12 @@ class Lexer {
         return true;
     }
 
-    private boolean isBlank(int c) {
-        if (c == '\n' || c == '\r' || c == '\t' || c == ' ') {
-            return true;
-        }
-        return false;
-    }
-
     private boolean isHexValid(char c) {
         String hex = "0123456789abcdefABCDEF";
         if (hex.contains(Character.toString(c))) {
             return true;
         }
         return false;
-    }
-
-    private int readBlank() throws IOException {
-        for (c = readch();; c = readch()) {
-            if ((char) c == ' ' || c == '\t' || c == '\r') {
-                continue;
-            } else if ((char) c == '\n') {
-                line++;
-            } else {
-                break;
-            }
-        }
-        return c;
     }
 
     private int checkStateFrom1(int c) {
@@ -864,35 +844,6 @@ class Lexer {
         }
     }
 
-    void errorNotIdentifiedLexeme(String lexeme) {
-        lexeme = lexeme.replace("\n", "");
-        System.out.print(line + "\nlexema nao identificado [" + lexeme + "].");
-    }
-
-    void errorInvalidCharacter() {
-        if (c == '\n')
-            line--;
-        System.out.print(line + "\ncaractere invalido.");
-    }
-
-    void errorEOFNotExpected() {
-        System.out.print(line + "\nfim de arquivo nao esperado.");
-    }
-
-    private boolean isValidTokenBegin(char c) {
-        String valid = "/-.\"\'!=()<>,+-*;{}[]&|";
-        if (isLetter((char) c) || isDigit((char) c) || valid.contains(Character.toString(c)))
-            return true;
-        return false;
-    }
-
-    private boolean isAsciiExt(int c) {
-        if (c >= 0 && c <= 255) {
-            return true;
-        }
-        return false;
-    }
-
     private boolean isValid(char c) {
         String valid = " _.,;:()[]{}+-\"\'/|\\&%!?><=\n\r*";
         if (isDigit(c) || isLetter(c) || valid.contains(Character.toString(c))) {
@@ -927,6 +878,21 @@ class Lexer {
         if (letters.contains(Character.toString(c)))
             return true;
         return false;
+    }
+
+    void errorNotIdentifiedLexeme(String lexeme) {
+        lexeme = lexeme.replace("\n", "");
+        System.out.print(line + "\nlexema nao identificado [" + lexeme + "].");
+    }
+
+    void errorInvalidCharacter() {
+        if (c == '\n')
+            line--;
+        System.out.print(line + "\ncaractere invalido.");
+    }
+
+    void errorEOFNotExpected() {
+        System.out.print(line + "\nfim de arquivo nao esperado.");
     }
 }
 
