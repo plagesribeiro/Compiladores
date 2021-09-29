@@ -1,8 +1,10 @@
 import java.util.Hashtable;
 import java.io.IOException;
 
+// T06 -> problema do Gonza!
 public class Main {
     public static void main(String[] args) throws IOException {
+        // runLexerDebug();
         runLexer();
         // runParser();
     }
@@ -12,7 +14,7 @@ public class Main {
         p.S();
     }
 
-    public static void runLexer() throws IOException {
+    public static void runLexerDebug() throws IOException {
         Lexer lexer = new Lexer();
         Token t;
         do {
@@ -20,6 +22,14 @@ public class Main {
             if (t != null) {
                 System.out.println(t.toString());
             }
+        } while (t != null);
+    }
+
+    public static void runLexer() throws IOException {
+        Lexer lexer = new Lexer();
+        Token t;
+        do {
+            t = lexer.scan();
         } while (t != null);
     }
 }
@@ -583,8 +593,6 @@ class Lexer {
                         }
                         count++;
                     }
-                    lexeme += (char) c;
-                    lexeme = lexeme.substring(0, lexeme.length() - 1) + "$\"";
                     state = 5;
                     break;
                 case 9:
@@ -602,15 +610,12 @@ class Lexer {
                     }
                     break;
                 case 10:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if (isDigit((char) c)) {
+                    if (isDigit((char) c)) {
                         lexeme += (char) c;
                     } else if ((char) c == '.') {
                         lexeme += (char) c;
                         state = 11;
-                    } else if (isValid((char) c)) {
+                    } else if (isValid((char) c) || (c == 1)) {
                         giveBack = true;
                         state = 5;
                     } else if (c == -1) {
@@ -633,12 +638,9 @@ class Lexer {
                     }
                     break;
                 case 12:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if (isDigit((char) c)) {
+                    if (isDigit((char) c)) {
                         lexeme += (char) c;
-                    } else if (isValid((char) c)) {
+                    } else if (isValid((char) c) || giveBack) {
                         giveBack = true;
                         state = 5;
                     } else if (c == -1) {
@@ -649,13 +651,8 @@ class Lexer {
                     }
                     break;
                 case 13:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if ((char) c == '=') {
+                    if ((char) c == '=') {
                         lexeme += (char) c;
-                        state = 5;
-                    } else if (c == -1) {
                         state = 5;
                     } else {
                         giveBack = true;
@@ -663,13 +660,8 @@ class Lexer {
                     }
                     break;
                 case 14:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if ((char) c == '-' || (char) c == '=') {
+                    if ((char) c == '-' || (char) c == '=') {
                         lexeme += (char) c;
-                        state = 5;
-                    } else if (c == -1) {
                         state = 5;
                     } else {
                         giveBack = true;
@@ -677,13 +669,8 @@ class Lexer {
                     }
                     break;
                 case 15:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if ((char) c == '=') {
+                    if ((char) c == '=') {
                         lexeme += (char) c;
-                        state = 5;
-                    } else if (c == -1) {
                         state = 5;
                     } else {
                         giveBack = true;
@@ -691,13 +678,8 @@ class Lexer {
                     }
                     break;
                 case 16:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if ((char) c == '&') {
+                    if ((char) c == '&') {
                         lexeme += (char) c;
-                        state = 5;
-                    } else if (c == -1) {
                         state = 5;
                     } else {
                         giveBack = true;
@@ -722,7 +704,7 @@ class Lexer {
                         return null;
                     } else if (isLetter((char) c) || isDigit((char) c) || (char) c == '.' || (char) c == '_') {
                         lexeme += (char) c;
-                    } else if (isValid((char) c)) {
+                    } else if (isValid((char) c) || c == -1) {
                         giveBack = true;
                         state = 5;
                     } else if (c != -1) {
@@ -731,17 +713,13 @@ class Lexer {
                     }
                     break;
                 case 19:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if ((char) c == '*') {
+
+                    if ((char) c == '*') {
                         state = 20;
                         lexeme = "";
                     } else {
-                        if (c != -1) {
-                            giveBack = true;
-                            state = 5;
-                        }
+                        giveBack = true;
+                        state = 5;
                     }
                     break;
                 case 20:
