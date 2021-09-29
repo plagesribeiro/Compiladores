@@ -5,8 +5,8 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws IOException {
         // runLexerDebug();
-        runLexer();
-        // runParser();
+        // runLexer();
+        runParser();
     }
 
     public static void runParser() throws IOException {
@@ -54,7 +54,11 @@ class Parser {
     }
 
     void exitError() {
-        System.out.print(lexer.line + "\ntoken nao esperado [" + token.lexeme + "].");
+        
+        String lexeme = token.lexeme.replace("\r", "");
+        System.out.println(lexer.line + "\ntoken nao esperado ["+lexeme+"].");
+
+        //System.out.println("I'm in line #" + new Exception().getStackTrace()[1].getLineNumber());
         System.exit(1);
     }
 
@@ -71,7 +75,6 @@ class Parser {
         if (token.tag == Tag.CHAR || token.tag == Tag.INT || token.tag == Tag.STRING || token.tag == Tag.FLOAT) {
             readNextToken();
             if (ListaDeIds()) {
-                readNextToken();
                 if (token.tag == Tag.SEMICOLON) {
                     return true;
                 } else {
@@ -87,7 +90,6 @@ class Parser {
                 if (token.tag == Tag.EQ) {
                     readNextToken();
                     if (Expressao()) {
-                        readNextToken();
                         if (token.tag == Tag.SEMICOLON) {
                             return true;
                         } else {
@@ -123,8 +125,8 @@ class Parser {
     }
 
     boolean Comando() {
-        if (Atribuicao() || Repeticao() || Teste() || Leitura() || Escrita()) {
-            readNextToken();
+        if (!Atribuicao() && !Repeticao() && !Teste() && !Leitura() && !Escrita()) {
+            return true;
         }
         if (token.tag == Tag.SEMICOLON) {
             return true;
@@ -136,12 +138,11 @@ class Parser {
     }
 
     boolean ListaDeIds() {
-        if (token.tag == Tag.ID) {
+        if (Di()) {
             do {
-                readNextToken();
                 if (token.tag == Tag.COMMA) {
                     readNextToken();
-                    if (!(token.tag == Tag.ID)) {
+                    if (!Di()) {
                         exitError();
                     }
                 } else {
@@ -152,13 +153,31 @@ class Parser {
         return false;
     }
 
+    boolean Di() {
+        if (token.tag == Tag.ID) {
+            readNextToken();
+            if (token.tag == Tag.ASSIGN) {
+                readNextToken();
+                if (token.tag == Tag.VALUE_CHAR || token.tag == Tag.VALUE_FLOAT || token.tag == Tag.VALUE_STRING
+                        || token.tag == Tag.VALUE_INT) {
+                    readNextToken();
+                    return true;
+                } else {
+                    exitError();
+                }
+            }
+            return true;
+
+        }
+        return false;
+    }
+
     boolean Atribuicao() {
         if (token.tag == Tag.ID) {
             readNextToken();
             if (token.tag == Tag.OPEN_BRACKET) {
                 readNextToken();
                 if (Expressao()) {
-                    readNextToken();
                     if (token.tag == Tag.CLOSE_BRACKET) {
                         return true;
                     } else {
@@ -186,7 +205,6 @@ class Parser {
         if (token.tag == Tag.WHILE) {
             readNextToken();
             if (Expressao()) {
-                readNextToken();
                 if (Comandos()) {
                     return true;
                 } else {
@@ -229,6 +247,7 @@ class Parser {
                 if (token.tag == Tag.ID || Expressao()) {
                     readNextToken();
                     if (token.tag == Tag.CLOSE_PARENTHESIS) {
+                        readNextToken();
                         return true;
                     } else {
                         exitError();
@@ -250,7 +269,6 @@ class Parser {
                 readNextToken();
                 if (Expressao()) {
                     do {
-                        readNextToken();
                         if (token.tag == Tag.COMMA) {
                             readNextToken();
                             if (!Expressao()) {
@@ -258,6 +276,7 @@ class Parser {
                             }
                         } else {
                             if (token.tag == Tag.CLOSE_PARENTHESIS) {
+                                readNextToken();
                                 return true;
                             } else {
                                 exitError();
@@ -276,7 +295,6 @@ class Parser {
 
     boolean Expressao() {
         if (ExpS()) {
-            readNextToken();
             if (Comp()) {
                 readNextToken();
                 if (ExpS()) {
@@ -305,7 +323,6 @@ class Parser {
         }
         if (T()) {
             do {
-                readNextToken();
                 if (token.tag == Tag.MINUS || token.tag == Tag.PLUS || token.tag == Tag.OR) {
                     readNextToken();
                     if (!T()) {
@@ -325,7 +342,6 @@ class Parser {
     boolean T() {
         if (F()) {
             do {
-                readNextToken();
                 if (token.tag == Tag.MULTIPLY || token.tag == Tag.SLASH_FORWARD || token.tag == Tag.AND
                         || token.tag == Tag.DIV || token.tag == Tag.MOD) {
                     readNextToken();
@@ -348,8 +364,8 @@ class Parser {
             if (token.tag == Tag.OPEN_BRACKET) {
                 readNextToken();
                 if (Expressao()) {
-                    readNextToken();
                     if (token.tag == Tag.CLOSE_BRACKET) {
+                        readNextToken();
                         return true;
                     } else {
                         exitError();
@@ -363,10 +379,8 @@ class Parser {
 
         } else if (token.tag == Tag.VALUE_CHAR || token.tag == Tag.VALUE_FLOAT || token.tag == Tag.VALUE_STRING
                 || token.tag == Tag.VALUE_INT) {
+            readNextToken();
             return true;
-
-            // } else if (!F()) {
-            // return true;
 
         } else if (P()) {
             return true;
@@ -396,8 +410,8 @@ class Parser {
         if (token.tag == Tag.OPEN_PARENTHESIS) {
             readNextToken();
             if (Expressao()) {
-                readNextToken();
                 if (token.tag == Tag.CLOSE_PARENTHESIS) {
+                    readNextToken();
                     return true;
                 } else {
                     exitError();
@@ -405,8 +419,6 @@ class Parser {
             } else {
                 exitError();
             }
-        } else {
-            exitError();
         }
         return false;
     }
@@ -471,7 +483,7 @@ class Lexer {
         while (state != 5) {
             if (!giveBack && state != 5) {
                 c = readch();
-                if (c == '\n') {
+                if ((char) c == '\n') {
                     line++;
                 }
             }
@@ -548,7 +560,7 @@ class Lexer {
                     if (c == -1) {
                         errorEOFNotExpected();
                         return null;
-                    } else if (isAsciiExt(c) && c != '\n') {
+                    } else if (isAsciiExt(c) && (c != '\n')) {
                         state = 7;
                         lexeme += (char) c;
                     } else {
@@ -578,7 +590,7 @@ class Lexer {
                     }
                     int count = 0;
                     for (; (char) c != '"'; c = readch()) {
-                        if (c != '\n' && c != '"' && c != '$') {
+                        if ((c != '\n') && c != '"' && c != '$') {
                             if (c >= 0 && c <= 255 && count <= 254) {
                                 lexeme += (char) c;
                             } else {
@@ -784,7 +796,7 @@ class Lexer {
         lexeme = "";
         state = 1;
         if (giveBack) {
-            if ((char) c != '\n' && (char) c != ' ') {
+            if ((c != '\n') && (char) c != ' ') {
                 lexeme += (char) c;
                 state = checkStateFrom1((char) c);
             }
@@ -819,7 +831,7 @@ class Lexer {
 
     private int readBlank() throws IOException {
         for (c = readch();; c = readch()) {
-            if ((char) c == ' ' || c == '\t') {
+            if ((char) c == ' ' || c == '\t' || c == '\r') {
                 continue;
             } else if ((char) c == '\n' || (char) c == '\r') {
                 line++;

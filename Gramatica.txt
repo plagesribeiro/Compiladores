@@ -6,7 +6,8 @@
 //Comando -> (Atribuicao | Repeticao | Teste | Nulo | Leitura | Escrita) ";"
 
 
-//Lista-de-ids -> ID {"," ID}*
+//Lista-de-ids -> Di {"," Di}*
+//Di -> ID[<-const]
 
 
 //Atribuicao -> ID ["["Exp"]"] "<-" Exp
