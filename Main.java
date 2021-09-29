@@ -1,4 +1,5 @@
 import java.util.Hashtable;
+
 import java.io.IOException;
 
 // T06 -> problema do Gonza!
@@ -54,7 +55,7 @@ class Parser {
     }
 
     void exitError() {
-
+        // PODE ENTREGAR FIM DE ARQUIVO NAO ESPERADO
         String lexeme = token.lexeme;
         System.out.println(lexer.line + "\ntoken nao esperado [" + lexeme + "].");
 
@@ -482,42 +483,40 @@ class Lexer {
 
     public Token scan() throws IOException {
         while (state != 5) {
-            if (!giveBack && state != 5) {
+            if (!giveBack && state != 5 && state != 23 && state != 24 && state != 25) {
                 c = readch();
                 if ((char) c == '\n') {
                     line++;
                 }
             }
             switch (state) {
-                case 0:
-                    if (isAsciiExt(c)) {
-                        errorNotIdentifiedLexeme(lexeme);
-                    } else {
-                        errorInvalidCharacter();
+                case 23:
+                    errorEOFNotExpected();
+                    return null;
+                case 24:
+                    if (c == '\n') {
+                        line--;
                     }
+                    errorNotIdentifiedLexeme(lexeme);
+                    return null;
+                case 25:
+                    errorInvalidCharacter();
+                    return null;
+                case 26:
+                    System.out.println(line + " linhas compiladas.");
                     return null;
                 case 1:
                     if (c == -1) {
-                        System.out.println(line + " linhas compiladas.");
-                        return null;
-                    }
-                    state = checkStateFrom1(c);
-                    if (state == 1) {
-                        c = readBlank();
-                        state = checkStateFrom1(c);
-                    } else if (state == 0) {
-                        if (c != -1) {
-                            lexeme += (char) c;
-                        }
-                        errorNotIdentifiedLexeme(lexeme);
-                        return null;
-                    }
-                    if (c != -1) {
+                        state = 26;
+                    } else if (c == '\n' || c == '\t' || c == '\r' || c == ' ') {
+                        state = 1;
+                    } else {
                         lexeme += (char) c;
+                        state = checkStateFrom1(c);
                     }
                     break;
                 case 2:
-                    if ((char) c == 'x') {
+                    if ((char) c == 'x' || (char) c == 'X') {
                         lexeme += (char) c;
                         state = 3;
                     } else if (c == '.') {
@@ -532,85 +531,71 @@ class Lexer {
                     }
                     break;
                 case 3:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if (isHexValid((char) c)) {
+                    if (isHexValid((char) c)) {
                         lexeme += (char) c;
                         state = 4;
+                    } else if (c == -1) {
+                        state = 23;
+                    } else if (isValid((char) c)) {
+                        lexeme += (char) c;
+                        state = 24;
                     } else {
-                        errorNotIdentifiedLexeme(lexeme);
-                        return null;
+                        state = 25;
                     }
                     break;
                 case 4:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if (isHexValid((char) c)) {
+                    if (isHexValid((char) c)) {
                         lexeme += (char) c;
                         state = 5;
                     } else if (c == -1) {
-                        state = 5;
+                        state = 23;
+                    } else if (isValid((char) c)) {
+                        lexeme += (char) c;
+                        state = 24;
                     } else {
-                        errorNotIdentifiedLexeme(lexeme);
-                        return null;
+                        state = 25;
                     }
                     break;
                 case 6:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if (isAsciiExt(c) && c != '\n' && c != '\r') {
+                    if (isValid((char) c) && c != '\n') {
                         state = 7;
                         lexeme += (char) c;
+                    } else if (c == -1) {
+                        state = 23;
+                    } else if (isValid((char) c)) {
+                        state = 24;
                     } else {
-                        errorInvalidCharacter();
-                        return null;
+                        state = 25;
                     }
                     break;
                 case 7:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if ((char) c == '\'') {
+                    if ((char) c == '\'') {
                         state = 5;
                         lexeme += (char) c;
+                    } else if (c == -1) {
+                        state = 23;
+                    } else if (isValid((char) c)) {
+                        state = 24;
                     } else {
-                        errorNotIdentifiedLexeme(lexeme);
-                        return null;
+                        state = 25;
                     }
                     break;
                 case 8:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if (c == '\n') {
-                        errorInvalidCharacter();
-                        return null;
-                    }
-                    int count = 0;
-                    for (; (char) c != '"'; c = readch()) {
-                        if ((c != '\n') && c != '"' && c != '$' && c != '\r') {
-                            if (c >= 0 && c <= 255 && count <= 254) {
-                                lexeme += (char) c;
-                            } else {
-                                if (c == -1) {
-                                    errorEOFNotExpected();
-                                } else if (!(c >= 0 && c <= 255)) {
-                                    errorInvalidCharacter();
-                                } else if (count > 254) {
-                                    errorNotIdentifiedLexeme(lexeme);
-                                }
-                                return null;
-                            }
-                        } else if (c == '\n' || c == '$') {
-                            errorInvalidCharacter();
-                            return null;
+                    if ((char) c == '\"') {
+                        lexeme += (char) c;
+                        state = 5;
+                    } else if (isValidStr((char) c)) {
+                        lexeme += (char) c;
+                        if (lexeme.length() > 256) {
+                            state = 24;
                         }
-                        count++;
+                    } else if (c == -1) {
+                        state = 23;
+                    } else if (c == '\n') {
+                        state = 24;
+                    } else {
+                        state = 25;
                     }
-                    state = 5;
                     break;
                 case 9:
                     if (isDigit((char) c)) {
@@ -623,7 +608,6 @@ class Lexer {
                         giveBack = true;
                         state = 5;
                     }
-
                     break;
                 case 10:
                     if (isDigit((char) c)) {
@@ -637,27 +621,26 @@ class Lexer {
                     }
                     break;
                 case 11:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if (isDigit((char) c)) {
+                    if (isDigit((char) c)) {
                         lexeme += (char) c;
                         state = 12;
+                    } else if (c == -1) {
+                        state = 23;
+                    } else if (isValid((char) c)) {
+                        state = 24;
                     } else {
-                        errorNotIdentifiedLexeme(lexeme);
-                        return null;
+                        state = 25;
                     }
                     break;
                 case 12:
                     if (isDigit((char) c)) {
                         lexeme += (char) c;
+                        if (!checkValidPrecision()) {
+                            state = 24;
+                        }
                     } else {
                         giveBack = true;
                         state = 5;
-                    }
-                    if (!checkValidPrecision()) {
-                        errorNotIdentifiedLexeme(lexeme);
-                        return null;
                     }
                     break;
                 case 13:
@@ -691,32 +674,32 @@ class Lexer {
                     if ((char) c == '&') {
                         lexeme += (char) c;
                         state = 5;
+                    } else if (c == -1) {
+                        state = 23;
+                    } else if (isValid((char) c)) {
+                        state = 24;
                     } else {
-                        giveBack = true;
-                        state = 5;
+                        state = 25;
                     }
                     break;
                 case 17:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if ((char) c == '|') {
+                    if ((char) c == '|') {
                         lexeme += (char) c;
                         state = 5;
+                    } else if (c == -1) {
+                        state = 23;
+                    } else if (isValid((char) c)) {
+                        state = 24;
                     } else {
-                        errorNotIdentifiedLexeme(lexeme);
-                        return null;
+                        state = 25;
                     }
                     break;
                 case 18:
-                    if (lexeme.length() > 32) {
-                        errorNotIdentifiedLexeme(lexeme);
-                        return null;
-                    } else if (isLetter((char) c) || isDigit((char) c) || (char) c == '.' || (char) c == '_') {
+                    if (isLetter((char) c) || isDigit((char) c) || (char) c == '.' || (char) c == '_') {
                         lexeme += (char) c;
-                    } else if (c != -1) {
-                        errorInvalidCharacter();
-                        return null;
+                        if (lexeme.length() > 32) {
+                            state = 24;
+                        }
                     } else {
                         giveBack = true;
                         state = 5;
@@ -732,44 +715,39 @@ class Lexer {
                     }
                     break;
                 case 20:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if ((char) c == '*') {
+                    if ((char) c == '*') {
                         state = 22;
                     } else if (isValid((char) c)) {
                         state = 21;
+                    } else if (c == -1) {
+                        state = 23;
                     } else {
-                        errorInvalidCharacter();
-                        return null;
+                        state = 25;
                     }
                     break;
                 case 21:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if ((char) c == '*') {
+                    if ((char) c == '*') {
                         state = 22;
                     } else if (isValid((char) c)) {
-                        continue;
+                        break;
+                    } else if (c == -1) {
+                        state = 23;
                     } else {
-                        errorInvalidCharacter();
-                        return null;
+                        state = 25;
                     }
                     break;
                 case 22:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if ((char) c == '/') {
+                    if ((char) c == '/') {
                         lexeme = "";
                         state = 1;
                     } else if (isValid((char) c)) {
                         state = 21;
+                    } else if (c == -1) {
+                        state = 23;
                     } else {
-                        errorInvalidCharacter();
-                        return null;
+                        state = 25;
                     }
+                    break;
             }
         }
 
@@ -791,7 +769,9 @@ class Lexer {
         lexeme = "";
         state = 1;
         if (giveBack) {
-            if ((c != '\n') && (char) c != ' ' && (char) c != '\r') {
+            if (c == -1) {
+                state = 26;
+            } else if ((c != '\n') && (char) c != ' ' && (char) c != '\r' && c != '\t') {
                 lexeme += (char) c;
                 state = checkStateFrom1((char) c);
             }
@@ -845,9 +825,9 @@ class Lexer {
     }
 
     private int checkStateFrom1(int c) {
-        if (isInvalidTokenBegin((char) c)) {
-            return 0;
-        } else if ((char) c == ' ' || (char) c == '\r') {
+        if ((char) c == -1) {
+            return 26;
+        } else if ((char) c == ' ' || (char) c == '\r' || c == '\n' || c == '\t') {
             return 1;
         } else if ((char) c == '0') { // Le char em hexa ou números iniciados em 0
             return 2;
@@ -877,13 +857,15 @@ class Lexer {
             return 17;
         } else if (isLetter((char) c) || (char) c == '_') { // Le ID
             return 18;
+        } else if (isValid((char) c)) {
+            return 24;
+        } else {
+            return 25;
         }
-        return 1;
     }
 
     void errorNotIdentifiedLexeme(String lexeme) {
-        if (c == '\n')
-            line--;
+        lexeme = lexeme.replace("\n", "");
         System.out.print(line + "\nlexema nao identificado [" + lexeme + "].");
     }
 
@@ -897,9 +879,9 @@ class Lexer {
         System.out.print(line + "\nfim de arquivo nao esperado.");
     }
 
-    private boolean isInvalidTokenBegin(char c) {
-        String invalid = ":\\%?$";
-        if (invalid.contains(Character.toString(c)))
+    private boolean isValidTokenBegin(char c) {
+        String valid = "/-.\"\'!=()<>,+-*;{}[]&|";
+        if (isLetter((char) c) || isDigit((char) c) || valid.contains(Character.toString(c)))
             return true;
         return false;
     }
@@ -919,8 +901,14 @@ class Lexer {
         return false;
     }
 
+    private boolean isValidStr(char c) {
+        if (isValid((char) c) && c != '\n' && c != '\r' && c != '$')
+            return true;
+        return false;
+    }
+
     private boolean isToken(char c) {
-        String valid = "=(),+-*/;{}[]";
+        String valid = "=(),+*/;{}[]";
         if (valid.contains(Character.toString(c))) {
             return true;
         }
