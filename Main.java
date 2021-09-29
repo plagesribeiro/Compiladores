@@ -576,7 +576,7 @@ class Lexer {
                         }
                     } else if (c == -1) {
                         state = 23;
-                    } else if (c == '\n') {
+                    } else if (isValid((char) c)) {
                         state = 24;
                     } else {
                         state = 25;
@@ -791,7 +791,6 @@ class Lexer {
                     }
                 }
             }
-
         }
         return true;
     }
