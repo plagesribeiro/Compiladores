@@ -124,13 +124,13 @@ class Parser {
         return false;
     }
 
-    boolean Di(){
-        if(token.tag == Tag.ID){
+    boolean Di() {
+        if (token.tag == Tag.ID) {
             readNextToken();
-            if(token.tag == Tag.ASSIGN){
+            if (token.tag == Tag.ASSIGN) {
                 readNextToken();
-                if(token.tag == Tag.VALUE_CHAR || token.tag == Tag.VALUE_FLOAT || token.tag == Tag.VALUE_STRING
-                || token.tag == Tag.VALUE_INT){
+                if (token.tag == Tag.VALUE_CHAR || token.tag == Tag.VALUE_FLOAT || token.tag == Tag.VALUE_STRING
+                        || token.tag == Tag.VALUE_INT) {
                     readNextToken();
                     return true;
                 } else {
@@ -177,7 +177,6 @@ class Parser {
         if (token.tag == Tag.WHILE) {
             readNextToken();
             if (Expressao()) {
-                readNextToken();
                 if (Comandos()) {
                     return true;
                 } else {
@@ -313,7 +312,6 @@ class Parser {
     boolean T() {
         if (F()) {
             do {
-                readNextToken();
                 if (token.tag == Tag.MULTIPLY || token.tag == Tag.SLASH_FORWARD || token.tag == Tag.AND
                         || token.tag == Tag.DIV || token.tag == Tag.MOD) {
                     readNextToken();
@@ -338,6 +336,7 @@ class Parser {
                 if (Expressao()) {
                     readNextToken();
                     if (token.tag == Tag.CLOSE_BRACKET) {
+                        readNextToken();
                         return true;
                     } else {
                         exitError();
@@ -351,6 +350,7 @@ class Parser {
 
         } else if (token.tag == Tag.VALUE_CHAR || token.tag == Tag.VALUE_FLOAT || token.tag == Tag.VALUE_STRING
                 || token.tag == Tag.VALUE_INT) {
+            readNextToken();
             return true;
 
             // } else if (!F()) {
@@ -385,6 +385,7 @@ class Parser {
             readNextToken();
             if (Expressao()) {
                 if (token.tag == Tag.CLOSE_PARENTHESIS) {
+                    readNextToken();
                     return true;
                 } else {
                     exitError();
