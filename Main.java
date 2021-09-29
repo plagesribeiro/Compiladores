@@ -483,28 +483,13 @@ class Lexer {
 
     public Token scan() throws IOException {
         while (state != 5) {
-            if (!giveBack && state != 5 && state != 23 && state != 24 && state != 25) {
+            if (!giveBack && state != 5 && state != 23 && state != 24 && state != 25 && state != 26) {
                 c = readch();
                 if ((char) c == '\n') {
                     line++;
                 }
             }
             switch (state) {
-                case 23:
-                    errorEOFNotExpected();
-                    return null;
-                case 24:
-                    if (c == '\n') {
-                        line--;
-                    }
-                    errorNotIdentifiedLexeme(lexeme);
-                    return null;
-                case 25:
-                    errorInvalidCharacter();
-                    return null;
-                case 26:
-                    System.out.println(line + " linhas compiladas.");
-                    return null;
                 case 1:
                     if (c == -1) {
                         state = 26;
@@ -748,6 +733,21 @@ class Lexer {
                         state = 25;
                     }
                     break;
+                case 23:
+                    errorEOFNotExpected();
+                    return null;
+                case 24:
+                    if (c == '\n') {
+                        line--;
+                    }
+                    errorNotIdentifiedLexeme(lexeme);
+                    return null;
+                case 25:
+                    errorInvalidCharacter();
+                    return null;
+                case 26:
+                    System.out.println(line + " linhas compiladas.");
+                    return null;
             }
         }
 
