@@ -476,6 +476,13 @@ class Lexer {
                 }
             }
             switch (state) {
+                case 0:
+                    if (isAsciiExt(c)) {
+                        errorNotIdentifiedLexeme(lexeme);
+                    } else {
+                        errorInvalidCharacter();
+                    }
+                    return null;
                 case 1:
                     if (c == -1) {
                         System.out.println(line + " linhas compiladas.");
@@ -497,10 +504,7 @@ class Lexer {
                     }
                     break;
                 case 2:
-                    if (c == -1) {
-                        errorEOFNotExpected();
-                        return null;
-                    } else if ((char) c == 'x') {
+                    if ((char) c == 'x') {
                         lexeme += (char) c;
                         state = 3;
                     } else if (c == '.') {
@@ -640,13 +644,12 @@ class Lexer {
                 case 12:
                     if (isDigit((char) c)) {
                         lexeme += (char) c;
-                    } else if (isValid((char) c) || giveBack) {
+                    } else {
                         giveBack = true;
                         state = 5;
-                    } else if (c == -1) {
-                        state = 5;
-                    } else {
-                        errorInvalidCharacter();
+                    }
+                    if (!checkValidPrecision()) {
+                        errorNotIdentifiedLexeme(lexeme);
                         return null;
                     }
                     break;
@@ -713,7 +716,6 @@ class Lexer {
                     }
                     break;
                 case 19:
-
                     if ((char) c == '*') {
                         state = 20;
                         lexeme = "";
@@ -791,6 +793,22 @@ class Lexer {
         return t;
     }
 
+    private boolean checkValidPrecision() {
+        int count = 0;
+        for (int i = 0; i < lexeme.length(); i++) {
+            if (lexeme.charAt(i) == '.') {
+                for (int j = i + 1; j < lexeme.length(); j++) {
+                    count++;
+                    if (count > 6) {
+                        return false;
+                    }
+                }
+            }
+
+        }
+        return true;
+    }
+
     private boolean isHexValid(char c) {
         String hex = "0123456789abcdefABCDEF";
         if (hex.contains(Character.toString(c))) {
@@ -856,6 +874,8 @@ class Lexer {
     }
 
     void errorInvalidCharacter() {
+        if (c == '\n')
+            line--;
         System.out.print(line + "\ncaractere invalido.");
     }
 
@@ -864,7 +884,7 @@ class Lexer {
     }
 
     private boolean isInvalidTokenBegin(char c) {
-        String invalid = ":\\%?";
+        String invalid = ":\\%?$";
         if (invalid.contains(Character.toString(c)))
             return true;
         return false;
