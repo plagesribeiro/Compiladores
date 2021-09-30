@@ -43,8 +43,8 @@ class Parser {
         this.lexer = new Lexer();
     }
 
-    void CasaToken(byte esperado){
-        if(token.tag == esperado){
+    void CasaToken(byte esperado) {
+        if (token.tag == esperado) {
             readNextToken();
         } else {
             exitError();
@@ -82,38 +82,43 @@ class Parser {
     }
 
     boolean Declaracao() {
-        if (token.tag == Token.CHAR || token.tag == Token.INT || token.tag == Token.STRING || token.tag == Token.FLOAT) {
-            readNextToken();
+        if (Tipo()) {
             if (ListaDeIds()) {
-                if (token.tag == Token.SEMICOLON) {
-                    return true;
-                } else {
-                    exitError();
-                }
+                CasaToken(Token.SEMICOLON);
+                return true;
             } else {
                 exitError();
             }
         } else if (token.tag == Token.CONST) {
-            readNextToken();
-            if (token.tag == Token.ID) {
-                readNextToken();
-                if (token.tag == Token.EQ) {
-                    readNextToken();
-                    if (Expressao()) {
-                        if (token.tag == Token.SEMICOLON) {
-                            return true;
-                        } else {
-                            exitError();
-                        }
-                    } else {
-                        exitError();
-                    }
-                } else {
-                    exitError();
-                }
+            CasaToken(Token.CONST);
+            CasaToken(Token.ID);
+            CasaToken(Token.EQ);
+            if (Expressao()) {
+                CasaToken(Token.SEMICOLON);
+                return true;
             } else {
                 exitError();
             }
+        }
+        return false;
+    }
+
+    boolean Tipo() {
+        if (token.tag == Token.INT) {
+            CasaToken(Token.INT);
+            return true;
+
+        } else if (token.tag == Token.FLOAT) {
+            CasaToken(Token.FLOAT);
+            return true;
+
+        } else if (token.tag == Token.STRING) {
+            CasaToken(Token.STRING);
+            return true;
+
+        } else if (token.tag == Token.CHAR) {
+            CasaToken(Token.CHAR);
+            return true;
         }
         return false;
     }
@@ -121,13 +126,9 @@ class Parser {
     boolean Comandos() {
         if (token.tag == Token.OPEN_BRACE) {
             do {
-                readNextToken();
             } while (Comando());
-            if (token.tag == Token.CLOSE_BRACE) {
-                return true;
-            } else {
-                exitError();
-            }
+            CasaToken(Token.CLOSE_BRACE);
+            return true;
         } else if (Comando()) {
             return true;
         }
@@ -135,26 +136,24 @@ class Parser {
     }
 
     boolean Comando() {
-        if (!Atribuicao() && !Repeticao() && !Teste() && !Leitura() && !Escrita()) {
-            return true;
-        }
+        Atribuicao();
+        Repeticao();
+        Teste();
+        Leitura();
+        Escrita();
         if (token.tag == Token.SEMICOLON) {
+            CasaToken(Token.SEMICOLON);
             return true;
-        } else {
-            exitError();
         }
         return false;
-
     }
 
     boolean ListaDeIds() {
         if (Di()) {
             do {
                 if (token.tag == Token.COMMA) {
-                    readNextToken();
-                    if (!Di()) {
-                        exitError();
-                    }
+                    CasaToken(Token.COMMA);
+                    if (!Di()) exitError();
                 } else {
                     return true;
                 }
@@ -165,156 +164,116 @@ class Parser {
 
     boolean Di() {
         if (token.tag == Token.ID) {
-            readNextToken();
+            CasaToken(Token.ID);
             if (token.tag == Token.ASSIGN) {
-                readNextToken();
-                if (token.tag == Token.VALUE_CHAR || token.tag == Token.VALUE_FLOAT || token.tag == Token.VALUE_STRING
-                        || token.tag == Token.VALUE_INT) {
-                    readNextToken();
-                    return true;
-                } else {
-                    exitError();
-                }
+                CasaToken(Token.ASSIGN);
+                if (!Const()) exitError();
             }
             return true;
+        }
+        return false;
+    }
 
+    boolean Const() {
+        if (token.tag == Token.VALUE_INT) {
+            CasaToken(Token.VALUE_INT);
+            return true;
+
+        } else if (token.tag == Token.VALUE_FLOAT) {
+            CasaToken(Token.VALUE_FLOAT);
+            return true;
+
+        } else if (token.tag == Token.VALUE_STRING) {
+            CasaToken(Token.VALUE_STRING);
+            return true;
+
+        } else if (token.tag == Token.VALUE_CHAR) {
+            CasaToken(Token.VALUE_CHAR);
+            return true;
         }
         return false;
     }
 
     boolean Atribuicao() {
         if (token.tag == Token.ID) {
-            readNextToken();
+            CasaToken(Token.ID);
             if (token.tag == Token.OPEN_BRACKET) {
-                readNextToken();
-                if (Expressao()) {
-                    if (token.tag == Token.CLOSE_BRACKET) {
-                        return true;
-                    } else {
-                        exitError();
-                    }
-                } else {
-                    exitError();
-                }
+                CasaToken(Token.OPEN_BRACKET);
+                if (!Expressao()) exitError();
+                CasaToken(Token.CLOSE_BRACKET);
+                return true;
             }
-            if (token.tag == Token.ASSIGN) {
-                readNextToken();
-                if (Expressao()) {
-                    return true;
-                } else {
-                    exitError();
-                }
-            } else {
-                exitError();
-            }
+            CasaToken(Token.ASSIGN);
+            if (!Expressao()) exitError();
+            return true;
         }
         return false;
     }
 
     boolean Repeticao() {
         if (token.tag == Token.WHILE) {
-            readNextToken();
-            if (Expressao()) {
-                if (Comandos()) {
-                    return true;
-                } else {
-                    exitError();
-                }
-            } else {
-                exitError();
-            }
+            CasaToken(Token.WHILE);
+            if (!Expressao()) exitError();
+            if (!Comandos()) exitError();
+            return true;
         }
         return false;
     }
 
     boolean Teste() {
         if (token.tag == Token.IF) {
-            readNextToken();
-            if (Comandos()) {
-                readNextToken();
-                if (token.tag == Token.ELSE) {
-                    readNextToken();
-                    if (Comandos()) {
-                        return true;
-                    } else {
-                        exitError();
-                    }
-                } else {
-                    exitError();
-                }
-            } else {
-                exitError();
-            }
+            CasaToken(Token.IF);
+            if (!Expressao()) exitError();
+            if (!Comandos()) exitError();
+            CasaToken(Token.ELSE);
+            if (!Comandos()) exitError();
+            return true;
         }
         return false;
     }
 
     boolean Leitura() {
         if (token.tag == Token.READLN) {
-            readNextToken();
-            if (token.tag == Token.OPEN_PARENTHESIS) {
-                readNextToken();
-                if (token.tag == Token.ID || Expressao()) {
-                    readNextToken();
-                    if (token.tag == Token.CLOSE_PARENTHESIS) {
-                        readNextToken();
-                        return true;
-                    } else {
-                        exitError();
-                    }
-                } else {
-                    exitError();
-                }
-            } else {
+            CasaToken(Token.READLN);
+            CasaToken(Token.OPEN_PARENTHESIS);
+            if (token.tag == Token.ID) {
+                CasaToken(Token.ID);
+            } else if (!Expressao()) {
                 exitError();
             }
+            CasaToken(Token.CLOSE_PARENTHESIS);
+            return true;
         }
         return false;
     }
 
     boolean Escrita() {
         if (token.tag == Token.WRITE || token.tag == Token.WRITELN) {
-            readNextToken();
-            if (token.tag == Token.OPEN_PARENTHESIS) {
-                readNextToken();
-                if (Expressao()) {
-                    do {
-                        if (token.tag == Token.COMMA) {
-                            readNextToken();
-                            if (!Expressao()) {
-                                exitError();
-                            }
-                        } else {
-                            if (token.tag == Token.CLOSE_PARENTHESIS) {
-                                readNextToken();
-                                return true;
-                            } else {
-                                exitError();
-                            }
-                        }
-                    } while (true);
+            CasaToken(token.tag);
+            CasaToken(Token.OPEN_PARENTHESIS);
+            if (!Expressao()) exitError();
+            do {
+                if (token.tag == Token.COMMA) {
+                    CasaToken(Token.COMMA);
+                    if (!Expressao()) exitError();
                 } else {
-                    exitError();
+                    CasaToken(Token.CLOSE_PARENTHESIS);
+                    return true;
                 }
-            } else {
-                exitError();
-            }
+            } while (true);
         }
         return false;
     }
 
     boolean Expressao() {
         if (ExpS()) {
-            if (Comp()) {
-                readNextToken();
-                if (ExpS()) {
-                    return true;
+            do {
+                if (Comp()) {
+                    if (!ExpS()) exitError();
                 } else {
-                    exitError();
+                    return true;
                 }
-            } else {
-                return true;
-            }
+            } while (true);
         } else {
             exitError();
         }
@@ -323,27 +282,45 @@ class Parser {
     }
 
     boolean Comp() {
-        return token.tag == Token.EQ || token.tag == Token.NOT_EQUAL || token.tag == Token.LOWER || token.tag == Token.GREATER
-                || token.tag == Token.LOWER_EQUAL || token.tag == Token.GREATER_EQUAL;
+        if (token.tag == Token.EQ) {
+            CasaToken(Token.EQ);
+            return true;
+
+        } else if (token.tag == Token.NOT_EQUAL) {
+            CasaToken(Token.NOT_EQUAL);
+            return true;
+
+        } else if (token.tag == Token.LOWER) {
+            CasaToken(Token.LOWER);
+            return true;
+
+        } else if (token.tag == Token.GREATER) {
+            CasaToken(Token.GREATER);
+            return true;
+
+        } else if (token.tag == Token.LOWER_EQUAL) {
+            CasaToken(Token.LOWER_EQUAL);
+            return true;
+        } else if (token.tag == Token.GREATER_EQUAL) {
+            CasaToken(Token.GREATER_EQUAL);
+            return true;
+        }
+        return false;
     }
 
     boolean ExpS() {
         if (token.tag == Token.MINUS || token.tag == Token.PLUS) {
-            readNextToken();
+            CasaToken(token.tag);
         }
         if (T()) {
             do {
                 if (token.tag == Token.MINUS || token.tag == Token.PLUS || token.tag == Token.OR) {
-                    readNextToken();
-                    if (!T()) {
-                        exitError();
-                    }
+                    CasaToken(token.tag);
+                    if (!T()) exitError();
                 } else {
                     return true;
                 }
             } while (true);
-        } else {
-            exitError();
         }
         return false;
 
@@ -352,65 +329,65 @@ class Parser {
     boolean T() {
         if (F()) {
             do {
-                if (token.tag == Token.MULTIPLY || token.tag == Token.SLASH_FORWARD || token.tag == Token.AND
-                        || token.tag == Token.DIV || token.tag == Token.MOD) {
-                    readNextToken();
-                    if (!F()) {
-                        exitError();
-                    }
+                if (Op()) {
+                    if (!F()) exitError();
                 } else {
                     return true;
                 }
             } while (true);
-        } else {
-            exitError();
+        }
+        return false;
+    }
+
+    boolean Op() {
+        if (token.tag == Token.MULTIPLY) {
+            CasaToken(Token.MULTIPLY);
+            return true;
+
+        } else if (token.tag == Token.SLASH_FORWARD) {
+            CasaToken(Token.SLASH_FORWARD);
+            return true;
+
+        } else if (token.tag == Token.AND) {
+            CasaToken(Token.AND);
+            return true;
+
+        } else if (token.tag == Token.DIV) {
+            CasaToken(Token.DIV);
+            return true;
+
+        } else if (token.tag == Token.MOD) {
+            CasaToken(Token.MOD);
+            return true;
         }
         return false;
     }
 
     boolean F() {
         if (token.tag == Token.ID) {
-            readNextToken();
+            CasaToken(Token.ID);
             if (token.tag == Token.OPEN_BRACKET) {
-                readNextToken();
-                if (Expressao()) {
-                    if (token.tag == Token.CLOSE_BRACKET) {
-                        readNextToken();
-                        return true;
-                    } else {
-                        exitError();
-                    }
-                } else {
-                    exitError();
-                }
-            } else {
-                return true;
+                CasaToken(Token.OPEN_BRACKET);
+                if (!Expressao()) exitError();
+                CasaToken(Token.CLOSE_BRACKET);
             }
+            return true;
 
-        } else if (token.tag == Token.VALUE_CHAR || token.tag == Token.VALUE_FLOAT || token.tag == Token.VALUE_STRING
-                || token.tag == Token.VALUE_INT) {
-            readNextToken();
+        } else if (Const()) {
             return true;
 
         } else if (P()) {
             return true;
 
         } else if (token.tag == Token.INT) {
-            readNextToken();
-            if (P()) {
-                return true;
-            } else {
-                exitError();
-            }
+            CasaToken(Token.FLOAT);
+            if (!P()) exitError();
+            return true;
 
         } else if (token.tag == Token.FLOAT) {
-            readNextToken();
-            if (P()) {
-                return true;
-            } else {
-                exitError();
-            }
-
+            CasaToken(Token.FLOAT);
+            if (!P()) exitError();
+            return true;
         }
 
         return false;
@@ -418,17 +395,10 @@ class Parser {
 
     boolean P() {
         if (token.tag == Token.OPEN_PARENTHESIS) {
-            readNextToken();
-            if (Expressao()) {
-                if (token.tag == Token.CLOSE_PARENTHESIS) {
-                    readNextToken();
-                    return true;
-                } else {
-                    exitError();
-                }
-            } else {
-                exitError();
-            }
+            CasaToken(Token.OPEN_PARENTHESIS);
+            if (!Expressao()) exitError();
+            CasaToken(Token.CLOSE_PARENTHESIS);
+            return true;
         }
         return false;
     }
