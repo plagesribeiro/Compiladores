@@ -2,36 +2,14 @@ import java.util.Hashtable;
 
 import java.io.IOException;
 
-// T06 -> problema do Gonza!
 public class Main {
     public static void main(String[] args) throws IOException {
-        // runLexerDebug();
-        // runLexer();
         runParser();
     }
 
     public static void runParser() throws IOException {
         Parser p = new Parser();
         p.S();
-    }
-
-    public static void runLexerDebug() throws IOException {
-        Lexer lexer = new Lexer();
-        Token t;
-        do {
-            t = lexer.scan();
-            if (t != null) {
-                System.out.println(t.toString());
-            }
-        } while (t != null);
-    }
-
-    public static void runLexer() throws IOException {
-        Lexer lexer = new Lexer();
-        Token t;
-        do {
-            t = lexer.scan();
-        } while (t != null);
     }
 }
 
@@ -47,7 +25,7 @@ class Parser {
         if (token.tag == esperado) {
             readNextToken();
         } else if (token.tag == Token.EOF) {
-            System.out.print(lexer.line-1 + "\nfim de arquivo nao esperado.");
+            System.out.print(lexer.line - 1 + "\nfim de arquivo nao esperado.");
             exit();
         } else {
             exitError();
@@ -72,14 +50,15 @@ class Parser {
         exit();
     }
 
-    void exit(){
+    void exit() {
         System.exit(1);
     }
 
     public void S() {
         readNextToken();
-        while (Declaracao() || Comandos());
-        if(token.tag == Token.EOF){
+        while (Declaracao() || Comandos())
+            ;
+        if (token.tag == Token.EOF) {
             System.out.println(lexer.line + " linhas compiladas.");
             exit();
         } else {
@@ -131,7 +110,8 @@ class Parser {
     boolean Comandos() {
         if (token.tag == Token.OPEN_BRACE) {
             CasaToken(Token.OPEN_BRACE);
-            while (Comando());
+            while (Comando())
+                ;
             CasaToken(Token.CLOSE_BRACE);
             return true;
         } else if (Comando()) {
@@ -442,7 +422,7 @@ class Lexer {
         this.state = 1;
         this.giveBack = false;
         this.st = new SymbolTable();
-      
+
         // Insere as palavras reservadas na Tabela de Simbolos
         this.st.insertToken("const", new Token("const", Token.CONST));
         this.st.insertToken("int", new Token("int", Token.INT));
