@@ -741,23 +741,23 @@ class Lexer {
         Token t = st.findToken(lexeme);
         if (t == null) {
             if (isLetter(lexeme.charAt(0)) || lexeme.charAt(0) == '_')
-                t = st.insertToken(lexeme, new Token(lexeme, Token.ID)); // Token e ID
+                t = st.insertToken(lexeme, new Token(lexeme, Token.ID)); // Token e' ID
             else if (lexeme.charAt(0) == '\''
                     || (lexeme.length() > 2) && (lexeme.charAt(0) == '0' && lexeme.charAt(1) == 'x'))
-                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_CHAR)); // Token e char
+                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_CHAR)); // Token e' char
             else if (lexeme.charAt(0) == '"')
-                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_STRING)); // Token e String
+                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_STRING)); // Token e' String
             else if (lexeme.contains("."))
-                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_FLOAT)); // Token e float
+                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_FLOAT)); // Token e' float
             else
-                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_INT)); // Token e int
+                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_INT)); // Token e' int
         }
 
         lexeme = ""; // Reseta valor atual de lexema para leitura do proximo token
         state = 1; // Reseta o automato para o estado inicial
         if (giveBack) {
             if (c == -1) {
-                state = 26; // Fim da compilacao
+                state = 26; // Fim de arquivo sem erro lexico
             } else if ((c != '\n') && (char) c != ' ' && (char) c != '\r' && c != '\t') {
                 lexeme += (char) c;
                 state = checkStateFrom1((char) c); // Verifica o proximo estado caso o caractere tenha sido devolvido
