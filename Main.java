@@ -73,8 +73,8 @@ class Parser {
     }
 
     public void S() {
+        readNextToken();
         do {
-            readNextToken();
             if (!Declaracao() && !Comandos()) {
                 exitError();
             }
@@ -83,22 +83,18 @@ class Parser {
 
     boolean Declaracao() {
         if (Tipo()) {
-            if (ListaDeIds()) {
-                CasaToken(Token.SEMICOLON);
-                return true;
-            } else {
-                exitError();
-            }
+            if (!ListaDeIds()) exitError();
+            CasaToken(Token.SEMICOLON);
+            return true;
+
         } else if (token.tag == Token.CONST) {
             CasaToken(Token.CONST);
             CasaToken(Token.ID);
             CasaToken(Token.EQ);
-            if (Expressao()) {
-                CasaToken(Token.SEMICOLON);
-                return true;
-            } else {
-                exitError();
-            }
+            if (!Expressao()) exitError();
+            CasaToken(Token.SEMICOLON);
+            return true;
+            
         }
         return false;
     }
