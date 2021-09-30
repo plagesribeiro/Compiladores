@@ -46,6 +46,9 @@ class Parser {
     void CasaToken(byte esperado) {
         if (token.tag == esperado) {
             readNextToken();
+        } else if (token.tag == Token.EOF) {
+            System.out.print(lexer.line + "\nfim de arquivo nao esperado.");
+            System.exit(1);
         } else {
             exitError();
         }
@@ -75,9 +78,11 @@ class Parser {
     public void S() {
         readNextToken();
         do {
-            if (!Declaracao() && !Comandos()) {
+            if (token.tag == Token.EOF) {
+                System.out.println(lexer.line + " linhas compiladas.");
+                System.exit(1);
+            } else if (!Declaracao() && !Comandos())
                 exitError();
-            }
         } while (true);
     }
 
@@ -123,6 +128,7 @@ class Parser {
 
     boolean Comandos() {
         if (token.tag == Token.OPEN_BRACE) {
+            CasaToken(Token.OPEN_BRACE);
             do {
             } while (Comando());
             CasaToken(Token.CLOSE_BRACE);
@@ -740,8 +746,7 @@ class Lexer {
                     errorInvalidCharacter();
                     return null;
                 case 26:
-                    System.out.println(line + " linhas compiladas.");
-                    return null;
+                    return new Token("EOF", Token.EOF);
             }
         }
 
@@ -951,6 +956,7 @@ class Token {
     public final static byte VALUE_STRING = 39;
     public final static byte VALUE_INT = 40;
     public final static byte VALUE_FLOAT = 41;
+    public final static byte EOF = 42;
 
     public String lexeme;
     public byte tag;
