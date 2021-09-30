@@ -25,10 +25,9 @@ class Parser {
         if (token.tag == esperado) {
             readNextToken();
         } else if (token.tag == Token.EOF) {
-            System.out.print(lexer.line - 1 + "\nfim de arquivo nao esperado.");
-            exit();
+            errorEOF();
         } else {
-            exitError();
+            errorNotExpectedToken();
         }
     }
 
@@ -43,10 +42,18 @@ class Parser {
         }
     }
 
-    void exitError() {
+    void errorEOF() {
+        System.out.print(lexer.line + "\nfim de arquivo nao esperado.");
+        exit();
+    }
+
+    void errorNotExpectedToken() { // T07 esta com problema aqui!
         // PODE ENTREGAR FIM DE ARQUIVO NAO ESPERADO
-        String lexeme = token.lexeme;
-        System.out.println(lexer.line + "\ntoken nao esperado [" + lexeme + "].");
+        if (token.tag == Token.EOF) {
+            errorEOF();
+        }
+
+        System.out.print(lexer.line + "\ntoken nao esperado [" + token.lexeme + "].");
         exit();
     }
 
@@ -56,22 +63,17 @@ class Parser {
 
     public void S() {
         readNextToken();
+        EOF();
         while (Declaracao() || Comandos())
             ;
-        if (token.tag == Token.EOF) {
-            System.out.println(lexer.line + " linhas compiladas.");
-            exit();
-        } else {
-            exitError();
-        }
-
     }
 
     boolean Declaracao() {
         if (Tipo()) {
             if (!ListaDeIds())
-                exitError();
+                errorNotExpectedToken();
             CasaToken(Token.SEMICOLON);
+            EOF();
             return true;
 
         } else if (token.tag == Token.CONST) {
@@ -79,8 +81,9 @@ class Parser {
             CasaToken(Token.ID);
             CasaToken(Token.EQ);
             if (!Expressao())
-                exitError();
+                errorNotExpectedToken();
             CasaToken(Token.SEMICOLON);
+            EOF();
             return true;
 
         }
@@ -91,15 +94,12 @@ class Parser {
         if (token.tag == Token.INT) {
             CasaToken(Token.INT);
             return true;
-
         } else if (token.tag == Token.FLOAT) {
             CasaToken(Token.FLOAT);
             return true;
-
         } else if (token.tag == Token.STRING) {
             CasaToken(Token.STRING);
             return true;
-
         } else if (token.tag == Token.CHAR) {
             CasaToken(Token.CHAR);
             return true;
@@ -113,11 +113,21 @@ class Parser {
             while (Comando())
                 ;
             CasaToken(Token.CLOSE_BRACE);
+            EOF();
             return true;
         } else if (Comando()) {
+            EOF();
             return true;
         }
         return false;
+    }
+
+    void EOF() {
+        if (token.tag == Token.EOF) {
+            CasaToken(Token.EOF);
+            System.out.print(lexer.line + " linhas compiladas.");
+            exit();
+        }
     }
 
     boolean Comando() {
@@ -129,6 +139,8 @@ class Parser {
         if (token.tag == Token.SEMICOLON) {
             CasaToken(Token.SEMICOLON);
             return true;
+        } else if (token.tag == Token.EOF) {
+            errorEOF();
         }
         return false;
     }
@@ -139,7 +151,7 @@ class Parser {
                 if (token.tag == Token.COMMA) {
                     CasaToken(Token.COMMA);
                     if (!Di())
-                        exitError();
+                        errorNotExpectedToken();
                 } else {
                     return true;
                 }
@@ -154,7 +166,7 @@ class Parser {
             if (token.tag == Token.ASSIGN) {
                 CasaToken(Token.ASSIGN);
                 if (!Const())
-                    exitError();
+                    errorNotExpectedToken();
             }
             return true;
         }
@@ -187,13 +199,13 @@ class Parser {
             if (token.tag == Token.OPEN_BRACKET) {
                 CasaToken(Token.OPEN_BRACKET);
                 if (!Expressao())
-                    exitError();
+                    errorNotExpectedToken();
                 CasaToken(Token.CLOSE_BRACKET);
                 return true;
             }
             CasaToken(Token.ASSIGN);
             if (!Expressao())
-                exitError();
+                errorNotExpectedToken();
             return true;
         }
         return false;
@@ -203,9 +215,9 @@ class Parser {
         if (token.tag == Token.WHILE) {
             CasaToken(Token.WHILE);
             if (!Expressao())
-                exitError();
+                errorNotExpectedToken();
             if (!Comandos())
-                exitError();
+                errorNotExpectedToken();
             return true;
         }
         return false;
@@ -215,12 +227,12 @@ class Parser {
         if (token.tag == Token.IF) {
             CasaToken(Token.IF);
             if (!Expressao())
-                exitError();
+                errorNotExpectedToken();
             if (!Comandos())
-                exitError();
+                errorNotExpectedToken();
             CasaToken(Token.ELSE);
             if (!Comandos())
-                exitError();
+                errorNotExpectedToken();
             return true;
         }
         return false;
@@ -233,7 +245,7 @@ class Parser {
             if (token.tag == Token.ID) {
                 CasaToken(Token.ID);
             } else if (!Expressao()) {
-                exitError();
+                errorNotExpectedToken();
             }
             CasaToken(Token.CLOSE_PARENTHESIS);
             return true;
@@ -246,12 +258,12 @@ class Parser {
             CasaToken(token.tag);
             CasaToken(Token.OPEN_PARENTHESIS);
             if (!Expressao())
-                exitError();
+                errorNotExpectedToken();
             do {
                 if (token.tag == Token.COMMA) {
                     CasaToken(Token.COMMA);
                     if (!Expressao())
-                        exitError();
+                        errorNotExpectedToken();
                 } else {
                     CasaToken(Token.CLOSE_PARENTHESIS);
                     return true;
@@ -266,13 +278,13 @@ class Parser {
             do {
                 if (Comp()) {
                     if (!ExpS())
-                        exitError();
+                        errorNotExpectedToken();
                 } else {
                     return true;
                 }
             } while (true);
         } else {
-            exitError();
+            errorNotExpectedToken();
         }
 
         return false;
@@ -314,7 +326,7 @@ class Parser {
                 if (token.tag == Token.MINUS || token.tag == Token.PLUS || token.tag == Token.OR) {
                     CasaToken(token.tag);
                     if (!T())
-                        exitError();
+                        errorNotExpectedToken();
                 } else {
                     return true;
                 }
@@ -329,7 +341,7 @@ class Parser {
             do {
                 if (Op()) {
                     if (!F())
-                        exitError();
+                        errorNotExpectedToken();
                 } else {
                     return true;
                 }
@@ -368,7 +380,7 @@ class Parser {
             if (token.tag == Token.OPEN_BRACKET) {
                 CasaToken(Token.OPEN_BRACKET);
                 if (!Expressao())
-                    exitError();
+                    errorNotExpectedToken();
                 CasaToken(Token.CLOSE_BRACKET);
             }
             return true;
@@ -382,13 +394,13 @@ class Parser {
         } else if (token.tag == Token.INT) {
             CasaToken(Token.FLOAT);
             if (!P())
-                exitError();
+                errorNotExpectedToken();
             return true;
 
         } else if (token.tag == Token.FLOAT) {
             CasaToken(Token.FLOAT);
             if (!P())
-                exitError();
+                errorNotExpectedToken();
             return true;
         }
 
@@ -399,7 +411,7 @@ class Parser {
         if (token.tag == Token.OPEN_PARENTHESIS) {
             CasaToken(Token.OPEN_PARENTHESIS);
             if (!Expressao())
-                exitError();
+                errorNotExpectedToken();
             CasaToken(Token.CLOSE_PARENTHESIS);
             return true;
         }
@@ -879,8 +891,8 @@ class Lexer {
     // nn
     // lexema nao identificado[lex].
     void errorNotIdentifiedLexeme(String lexeme) {
-        lexeme = lexeme.replace("\n", "");
         System.out.print(line + "\nlexema nao identificado [" + lexeme + "].");
+        System.exit(1);
     }
 
     // Erro para caracteres invalidos:
@@ -890,6 +902,7 @@ class Lexer {
         if (c == '\n')
             line--;
         System.out.print(line + "\ncaractere invalido.");
+        System.exit(1);
     }
 
     // Erro para fim de arquivo nao esperado:
@@ -897,6 +910,7 @@ class Lexer {
     // fim de arquivo nao esperado.
     void errorEOFNotExpected() {
         System.out.print(line + "\nfim de arquivo nao esperado.");
+        System.exit(1);
     }
 }
 
