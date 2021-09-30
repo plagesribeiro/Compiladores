@@ -83,7 +83,8 @@ class Parser {
 
     boolean Declaracao() {
         if (Tipo()) {
-            if (!ListaDeIds()) exitError();
+            if (!ListaDeIds())
+                exitError();
             CasaToken(Token.SEMICOLON);
             return true;
 
@@ -91,10 +92,11 @@ class Parser {
             CasaToken(Token.CONST);
             CasaToken(Token.ID);
             CasaToken(Token.EQ);
-            if (!Expressao()) exitError();
+            if (!Expressao())
+                exitError();
             CasaToken(Token.SEMICOLON);
             return true;
-            
+
         }
         return false;
     }
@@ -149,7 +151,8 @@ class Parser {
             do {
                 if (token.tag == Token.COMMA) {
                     CasaToken(Token.COMMA);
-                    if (!Di()) exitError();
+                    if (!Di())
+                        exitError();
                 } else {
                     return true;
                 }
@@ -163,7 +166,8 @@ class Parser {
             CasaToken(Token.ID);
             if (token.tag == Token.ASSIGN) {
                 CasaToken(Token.ASSIGN);
-                if (!Const()) exitError();
+                if (!Const())
+                    exitError();
             }
             return true;
         }
@@ -195,12 +199,14 @@ class Parser {
             CasaToken(Token.ID);
             if (token.tag == Token.OPEN_BRACKET) {
                 CasaToken(Token.OPEN_BRACKET);
-                if (!Expressao()) exitError();
+                if (!Expressao())
+                    exitError();
                 CasaToken(Token.CLOSE_BRACKET);
                 return true;
             }
             CasaToken(Token.ASSIGN);
-            if (!Expressao()) exitError();
+            if (!Expressao())
+                exitError();
             return true;
         }
         return false;
@@ -209,8 +215,10 @@ class Parser {
     boolean Repeticao() {
         if (token.tag == Token.WHILE) {
             CasaToken(Token.WHILE);
-            if (!Expressao()) exitError();
-            if (!Comandos()) exitError();
+            if (!Expressao())
+                exitError();
+            if (!Comandos())
+                exitError();
             return true;
         }
         return false;
@@ -219,10 +227,13 @@ class Parser {
     boolean Teste() {
         if (token.tag == Token.IF) {
             CasaToken(Token.IF);
-            if (!Expressao()) exitError();
-            if (!Comandos()) exitError();
+            if (!Expressao())
+                exitError();
+            if (!Comandos())
+                exitError();
             CasaToken(Token.ELSE);
-            if (!Comandos()) exitError();
+            if (!Comandos())
+                exitError();
             return true;
         }
         return false;
@@ -247,11 +258,13 @@ class Parser {
         if (token.tag == Token.WRITE || token.tag == Token.WRITELN) {
             CasaToken(token.tag);
             CasaToken(Token.OPEN_PARENTHESIS);
-            if (!Expressao()) exitError();
+            if (!Expressao())
+                exitError();
             do {
                 if (token.tag == Token.COMMA) {
                     CasaToken(Token.COMMA);
-                    if (!Expressao()) exitError();
+                    if (!Expressao())
+                        exitError();
                 } else {
                     CasaToken(Token.CLOSE_PARENTHESIS);
                     return true;
@@ -265,7 +278,8 @@ class Parser {
         if (ExpS()) {
             do {
                 if (Comp()) {
-                    if (!ExpS()) exitError();
+                    if (!ExpS())
+                        exitError();
                 } else {
                     return true;
                 }
@@ -312,7 +326,8 @@ class Parser {
             do {
                 if (token.tag == Token.MINUS || token.tag == Token.PLUS || token.tag == Token.OR) {
                     CasaToken(token.tag);
-                    if (!T()) exitError();
+                    if (!T())
+                        exitError();
                 } else {
                     return true;
                 }
@@ -326,7 +341,8 @@ class Parser {
         if (F()) {
             do {
                 if (Op()) {
-                    if (!F()) exitError();
+                    if (!F())
+                        exitError();
                 } else {
                     return true;
                 }
@@ -364,7 +380,8 @@ class Parser {
             CasaToken(Token.ID);
             if (token.tag == Token.OPEN_BRACKET) {
                 CasaToken(Token.OPEN_BRACKET);
-                if (!Expressao()) exitError();
+                if (!Expressao())
+                    exitError();
                 CasaToken(Token.CLOSE_BRACKET);
             }
             return true;
@@ -377,12 +394,14 @@ class Parser {
 
         } else if (token.tag == Token.INT) {
             CasaToken(Token.FLOAT);
-            if (!P()) exitError();
+            if (!P())
+                exitError();
             return true;
 
         } else if (token.tag == Token.FLOAT) {
             CasaToken(Token.FLOAT);
-            if (!P()) exitError();
+            if (!P())
+                exitError();
             return true;
         }
 
@@ -392,7 +411,8 @@ class Parser {
     boolean P() {
         if (token.tag == Token.OPEN_PARENTHESIS) {
             CasaToken(Token.OPEN_PARENTHESIS);
-            if (!Expressao()) exitError();
+            if (!Expressao())
+                exitError();
             CasaToken(Token.CLOSE_PARENTHESIS);
             return true;
         }
