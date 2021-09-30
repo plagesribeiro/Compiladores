@@ -47,8 +47,8 @@ class Parser {
         if (token.tag == esperado) {
             readNextToken();
         } else if (token.tag == Token.EOF) {
-            System.out.print(lexer.line + "\nfim de arquivo nao esperado.");
-            System.exit(1);
+            System.out.print(lexer.line-1 + "\nfim de arquivo nao esperado.");
+            exit();
         } else {
             exitError();
         }
@@ -58,7 +58,7 @@ class Parser {
         try {
             token = lexer.scan();
             if (token == null) {
-                System.exit(1);
+                exit();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -69,21 +69,23 @@ class Parser {
         // PODE ENTREGAR FIM DE ARQUIVO NAO ESPERADO
         String lexeme = token.lexeme;
         System.out.println(lexer.line + "\ntoken nao esperado [" + lexeme + "].");
+        exit();
+    }
 
-        // System.out.println("I'm in line #" + new
-        // Exception().getStackTrace()[1].getLineNumber());
+    void exit(){
         System.exit(1);
     }
 
     public void S() {
         readNextToken();
-        do {
-            if (token.tag == Token.EOF) {
-                System.out.println(lexer.line + " linhas compiladas.");
-                System.exit(1);
-            } else if (!Declaracao() && !Comandos())
-                exitError();
-        } while (true);
+        while (Declaracao() || Comandos());
+        if(token.tag == Token.EOF){
+            System.out.println(lexer.line + " linhas compiladas.");
+            exit();
+        } else {
+            exitError();
+        }
+
     }
 
     boolean Declaracao() {
@@ -129,8 +131,7 @@ class Parser {
     boolean Comandos() {
         if (token.tag == Token.OPEN_BRACE) {
             CasaToken(Token.OPEN_BRACE);
-            do {
-            } while (Comando());
+            while (Comando());
             CasaToken(Token.CLOSE_BRACE);
             return true;
         } else if (Comando()) {
