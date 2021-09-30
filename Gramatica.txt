@@ -1,4 +1,4 @@
-//S -> {Declaracao | Comandos} EOF
+//S -> {Declaracao | Comandos}* EOF
 
 //Declaracao -> ( Tipo Lista-de-ids ";" | "const" ID "=" Exp ";")
 //Tipo -> "char" | "string" | "int" | "float"
