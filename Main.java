@@ -473,7 +473,7 @@ class Lexer {
     }
 
     // O metodo segue o automato gerado para resolver a analise lexica
-    // e retorna um Token valido ou null para Token com erro
+    // e retorna um Token valido ou quebra execucao caso encontre algum problema
     public Token scan() throws IOException {
         while (state != 5) {
             if (!giveBack && state != 5 && state != 23 && state != 24 && state != 25) {
