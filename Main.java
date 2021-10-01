@@ -87,7 +87,6 @@ class Parser {
             CasaToken(Token.SEMICOLON);
             EOF();
             return true;
-
         }
         return false;
     }
@@ -327,7 +326,6 @@ class Parser {
             } while (true);
         }
         return false;
-
     }
 
     boolean T() {
