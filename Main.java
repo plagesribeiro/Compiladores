@@ -485,225 +485,225 @@ class Lexer {
             switch (state) {
                 case 1: // Define qual estado seguir a partir do caractere lido
                     if (isEOF(c)) {
-                        state = 26; // Programa compilado com sucesso
+                        changeState(26); // Programa compilado com sucesso
                     } else if (isBlank(c)) { // Leitura de espacos em branco e \n
                         initialState();
                     } else {
-                        lexeme += (char) c;
-                        state = checkStateFrom1(c); // Gera proximo estado do automato
+                        concatLexeme();
+                        changeState(checkStateFrom1(c)); // Gera proximo estado do automato
                     }
                     break;
 
                 case 2: // Leitura de char (hexa) ou inteiros e reais iniciados com 0
                     if (c == 'x' || c == 'X') {
-                        lexeme += (char) c;
-                        state = 3; // char hexa
+                        concatLexeme();
+                        changeState(3); // char hexa
                     } else if (c == '.') {
-                        lexeme += (char) c;
-                        state = 11; // numeros reais iniciados com 0.
+                        concatLexeme();
+                        changeState(11); // numeros reais iniciados com 0.
                     } else if (isDigit(c)) {
-                        lexeme += (char) c;
-                        state = 10; // numeros iniciados com 0 e seguidos de '.' ou numeros
+                        concatLexeme();
+                        changeState(10); // numeros iniciados com 0 e seguidos de '.' ou numeros
                     } else {
-                        state = 5; // Estado final. Encontrou apenas '0'
-                        giveBack = true; // Devolve c
+                        finalState(); // Estado final. Encontrou apenas '0'
+                        giveBack(); // Devolve c
                     }
                     break;
 
                 case 3: // Leitura de char (hexa)
                     if (isHexValid(c)) {
-                        lexeme += (char) c;
-                        state = 4; // Continua a leitura de um hexa
+                        concatLexeme();
+                        changeState(4); // Continua a leitura de um hexa
                     } else if (isValid(c) || isEOF(c)) {
-                        state = 24; // Lexema nao identificado
+                        changeState(24); // Lexema nao identificado
                     } else {
-                        state = 25; // Caractere invalido
+                        changeState(25); // Caractere invalido
                     }
                     break;
 
                 case 4: // Leitura de char (hexa)
                     if (isHexValid(c)) {
-                        lexeme += (char) c;
-                        state = 5; // Terminou a leitura de um hexa
-                    } else if (isValid((char) c) || isEOF(c)) {
-                        state = 24; // Lexema nao identificado
+                        concatLexeme();
+                        finalState(); // Terminou a leitura de um hexa
+                    } else if (isValid(c) || isEOF(c)) {
+                        changeState(24); // Lexema nao identificado
                     } else {
-                        state = 25; // Caractere invalido
+                        changeState(25); // Caractere invalido
                     }
                     break;
 
                 case 6: // Char no formato 'c'
                     if (isValid(c) && c != '\n') {
-                        state = 7; // Continua leitura de char no formato 'c'
-                        lexeme += (char) c;
+                        concatLexeme();
+                        changeState(7); // Continua leitura de char no formato 'c'
                     } else if (isValid(c) || isEOF(c)) {
-                        state = 24; // Lexema nao identificado
+                        changeState(24); // Lexema nao identificado
                     } else {
-                        state = 25; // Caractere invalido
+                        changeState(25); // Caractere invalido
                     }
                     break;
 
                 case 7: // Char no formato 'c'
                     if (c == '\'') {
-                        state = 5; // Fim de leitura de char
-                        lexeme += (char) c;
+                        concatLexeme();
+                        finalState(); // Fim de leitura de char
                     } else if (isEOF(c)) {
-                        state = 23; // Fim de arquivo nao esperado
+                        changeState(23); // Fim de arquivo nao esperado
                     } else if (isValid(c)) {
-                        state = 24; // Lexema nao identificado
+                        changeState(24); // Lexema nao identificado
                     } else {
-                        state = 25; // Caractere invalido
+                        changeState(25); // Caractere invalido
                     }
                     break;
 
                 case 8: // Leitura de string no formato "string"
                     if (c == '\"') {
                         lexeme += '$'; // Concatena flag de fim de string
-                        lexeme += (char) c;
-                        state = 5; // Fim de leitura de string
+                        concatLexeme();
+                        finalState(); // Fim de leitura de string
                     } else if (isValidStr(c)) {
-                        lexeme += (char) c;
+                        concatLexeme();
                         if (lexeme.length() > 256) { // Verifica tamanho de string
-                            state = 24; // Lexema nao identificado
+                            changeState(24); // Lexema nao identificado
                         }
                     } else if (isValid(c) || isEOF(c)) {
-                        state = 24; // Lexema nao identificado
+                        changeState(24); // Lexema nao identificado
                     } else {
-                        state = 25; // Caractere invalido
+                        changeState(25); // Caractere invalido
                     }
                     break;
 
                 case 9: // Numeros inteiros e reais iniciados com '-', ou apenas '-'
                     if (isDigit(c)) {
-                        state = 10; // Leitura de numeros reais ou inteiros negativos
-                        lexeme += (char) c;
+                        concatLexeme();
+                        changeState(10); // Leitura de numeros reais ou inteiros negativos
                     } else if (c == '.') {
-                        state = 11; // Numeros reais negativos iniciados com '-.' (-.1, -.2, -.3, ...)
-                        lexeme += (char) c;
+                        concatLexeme();
+                        changeState(11); // Numeros reais negativos iniciados com '-.' (-.1, -.2, -.3, ...)
                     } else {
-                        giveBack = true;
-                        state = 5; // Fim de leitura do token '-'
+                        giveBack();
+                        finalState(); // Fim de leitura do token '-'
                     }
                     break;
 
                 case 10: // Continua leitura de inteiros ou reais (positivos ou negativos)
                     if (isDigit(c)) {
-                        lexeme += (char) c; // Concatena 'n' numeros inteiros
-                    } else if ((char) c == '.') {
-                        lexeme += (char) c;
-                        state = 11; // Concatena '.' e segue para estado de leitura de tokens reais
+                        concatLexeme(); // Concatena 'n' numeros inteiros
+                    } else if (c == '.') {
+                        concatLexeme();
+                        changeState(11); // Concatena '.' e segue para estado de leitura de tokens reais
                     } else {
-                        giveBack = true;
-                        state = 5; // Fim de leitura de numero inteiro positivo ou negativo
+                        giveBack();
+                        finalState(); // Fim de leitura de numero inteiro positivo ou negativo
                     }
                     break;
 
                 case 11: // Numeros reais
                     if (isDigit(c)) {
-                        lexeme += (char) c;
-                        state = 12; // Continua leitura de numero real
+                        concatLexeme();
+                        changeState(12); // Continua leitura de numero real
                     } else if (isValid(c) || isEOF(c)) {
-                        state = 24; // Lexema nao esperado
+                        changeState(24); // Lexema nao esperado
                     } else {
-                        state = 25; // Caractere invalido
+                        changeState(25); // Caractere invalido
                     }
                     break;
 
                 case 12: // Leitura de numeros reais positivos ou negativos
                     if (isDigit(c)) {
-                        lexeme += (char) c;
+                        concatLexeme();
                         if (!checkFloatPrecision()) {
-                            state = 24; // Lexema nao esperado (precisao acima de 6 digitos)
+                            changeState(24); // Lexema nao esperado (precisao acima de 6 digitos)
                         }
                     } else {
-                        giveBack = true;
-                        state = 5; // Fim de leitura de numero real
+                        giveBack();
+                        finalState(); // Fim de leitura de numero real
                     }
                     break;
 
                 case 13: // Leitura de '!' ou '!='
                     if (c == '=') {
-                        lexeme += (char) c;
-                        state = 5; // Fim de leitura de '!='
+                        concatLexeme();
+                        finalState(); // Fim de leitura de '!='
                     } else {
-                        giveBack = true;
-                        state = 5; // Fim de leitura de '!'
+                        giveBack();
+                        finalState(); // Fim de leitura de '!'
                     }
                     break;
 
                 case 14: // Leitura de '<', '<=' ou '<-'
                     if (c == '-' || c == '=') {
-                        lexeme += (char) c;
-                        state = 5; // Fim de leitura de '<-' ou '<='
+                        concatLexeme();
+                        finalState(); // Fim de leitura de '<-' ou '<='
                     } else {
-                        giveBack = true;
-                        state = 5; // Fim de leitura de '<'
+                        giveBack();
+                        finalState(); // Fim de leitura de '<'
                     }
                     break;
 
                 case 15: // Leitura de '>' ou '>='
                     if (c == '=') {
-                        lexeme += (char) c;
-                        state = 5; // Fim de leitura de '>='
+                        concatLexeme();
+                        finalState(); // Fim de leitura de '>='
                     } else {
-                        giveBack = true;
-                        state = 5; // Fim de leitura de '>'
+                        giveBack();
+                        finalState(); // Fim de leitura de '>'
                     }
                     break;
 
                 case 16: // Leitura de '&&'
                     if (c == '&') {
-                        lexeme += (char) c;
-                        state = 5; // Fim de leitura de '&&'
+                        concatLexeme();
+                        finalState(); // Fim de leitura de '&&'
                     } else if (isValid(c) || isEOF(c)) {
-                        state = 24; // Caractere nao esperado
+                        changeState(24); // Caractere nao esperado
                     } else {
-                        state = 25; // Caractere invalido
+                        changeState(25); // Caractere invalido
                     }
                     break;
 
                 case 17: // Leitura de '||'
                     if (c == '|') {
-                        lexeme += (char) c;
-                        state = 5; // Fim de leitura de '||'
+                        concatLexeme();
+                        finalState(); // Fim de leitura de '||'
                     } else if (isValid(c) || isEOF(c)) {
-                        state = 24; // Caractere nao esperado
+                        changeState(24); // Caractere nao esperado
                     } else {
-                        state = 25; // Caractere invalido
+                        changeState(25); // Caractere invalido
                     }
                     break;
 
                 case 18: // Leitura de ID e tokens
                     if (isLetter(c) || isDigit(c) || c == '.' || c == '_') {
-                        lexeme += (char) c;
+                        concatLexeme();
                         if (lexeme.length() > 32) {
-                            state = 24; // Verifica se ID possui tamanho permitido
+                            changeState(24); // Verifica se ID possui tamanho permitido
                         }
                     } else {
-                        giveBack = true;
-                        state = 5; // Retorna ID lido
+                        giveBack();
+                        finalState(); // Retorna ID lido
                     }
                     break;
 
                 case 19: // Le '/' ou comentario
                     if (c == '*') {
-                        state = 20; // Le comentario
                         lexeme = "";
+                        changeState(20); // Le comentario
                     } else {
-                        giveBack = true;
-                        state = 5; // Retorna token '/'
+                        giveBack();
+                        finalState(); // Retorna token '/'
                     }
                     break;
 
                 case 20: // Fecha ou continua comentario
                     if (c == '*') {
-                        state = 21; // Tenta fechar comentario
+                        changeState(21); // Tenta fechar comentario
                     } else if (isValid(c)) {
                         break;
                     } else if (isEOF(c)) {
-                        state = 23; // Fim de arquivo nao esperado
+                        changeState(23); // Fim de arquivo nao esperado
                     } else {
-                        state = 25; // Caractere invalido
+                        changeState(25); // Caractere invalido
                     }
                     break;
 
@@ -712,9 +712,9 @@ class Lexer {
                         break; // Continua esperando para fechar o comentario
                     } else if (c == '/') {
                         lexeme = "";
-                        initialState(); // Termina leitura de comentario
+                        initialState(); // Termina leitura de comentario e volta ao estado inicial
                     } else {
-                        state = 20;
+                        changeState(20); // Continua a ler comentario
                     }
                     break;
 
@@ -742,39 +742,77 @@ class Lexer {
         // Pesquisa token na tabela de simbolos. Caso nao exista, ele deve ser inserido
         Token t = st.findToken(lexeme);
         if (t == null) {
-            if (isLetter(lexeme.charAt(0)) || lexeme.charAt(0) == '_')
-                t = st.insertToken(lexeme, new Token(lexeme, Token.ID)); // Token e' ID
+            if (isId())
+                t = insertToken(Token.ID); // Token e' ID
 
-            else if (lexeme.charAt(0) == '\'' || (lexeme.length() > 2)
-                    && (lexeme.charAt(0) == '0' && (lexeme.charAt(1) == 'x' || lexeme.charAt(1) == 'X')))
-                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_CHAR)); // Token e' char
+            else if (isChar())
+                t = insertToken(Token.VALUE_CHAR); // Token e' char
 
-            else if (lexeme.charAt(0) == '"')
-                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_STRING)); // Token e' String
+            else if (isString())
+                t = insertToken(Token.VALUE_STRING); // Token e' String
 
-            else if (lexeme.contains("."))
-                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_FLOAT)); // Token e' float
+            else if (isFloat())
+                t = insertToken(Token.VALUE_FLOAT); // Token e' float
 
             else
-                t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_INT)); // Token e' int
+                t = insertToken(Token.VALUE_INT); // Token e' int
         }
 
         lexeme = ""; // Reseta valor atual de lexema para leitura do proximo token
         initialState(); // Reseta o automato para o estado inicial
         if (giveBack) {
             if (isEOF(c)) {
-                state = 26; // Fim de arquivo sem erro lexico
-            } else if ((c != '\n') && c != ' ' && c != '\r' && c != '\t') {
-                lexeme += (char) c;
-                state = checkStateFrom1(c); // Verifica o proximo estado caso o caractere tenha sido devolvido
+                changeState(26); // Fim de arquivo sem erro lexico
+            } else if (!isBlank(c)) {
+                concatLexeme();
+                changeState(checkStateFrom1(c)); // Verifica o proximo estado caso o caractere tenha sido devolvido
             }
             giveBack = false;
         }
         return t; // Retorna o Token lido
     }
 
-    // Verifica se e' necessario ler proximo caractere com base na necessidade de
-    // devolver, estado final ou erro
+    // Insere token na tabela de simbolo com sua respectiva tag
+    Token insertToken(byte tag) {
+        return st.insertToken(lexeme, new Token(lexeme, tag));
+    }
+
+    // Verifica se lexema lido e' float.
+    private boolean isFloat() {
+        if (lexeme.contains("."))
+            return true;
+        return false;
+    }
+
+    // Verifica se lexema lido e' String.
+    private boolean isString() {
+        if (lexeme.charAt(0) == '"')
+            return true;
+        return false;
+    }
+
+    // Verifica se lexema lido e' char.
+    private boolean isChar() {
+        if (lexeme.charAt(0) == '\'' || (lexeme.length() > 2)
+                && (lexeme.charAt(0) == '0' && (lexeme.charAt(1) == 'x' || lexeme.charAt(1) == 'X')))
+            return true;
+        return false;
+    }
+
+    // Verifica se lexema lido e' ID.
+    private boolean isId() {
+        if (isLetter(lexeme.charAt(0)) || lexeme.charAt(0) == '_')
+            return true;
+        return false;
+    }
+
+    // Determina o proximo estado do automato
+    void changeState(int newState) {
+        state = newState;
+    }
+
+    // Apenas le o proximo caractere caso nao precise devolver, ir para o estado
+    // final ou estado de erro
     private boolean isNextCharReadable(int c) {
         if (!giveBack && state != 5 && state != 23 && state != 24 && state != 25)
             return true;
@@ -799,6 +837,16 @@ class Lexer {
             }
         }
         return true;
+    }
+
+    // Concatena o lexeme
+    void concatLexeme() {
+        lexeme += (char) c;
+    }
+
+    // Devolve caractere lido
+    void giveBack() {
+        giveBack = true;
     }
 
     // Reseta o estado para o inicial
@@ -830,8 +878,7 @@ class Lexer {
         if (isEOF(c))
             return 26;
 
-        else if (c == ' ' || c == '\r' || c == '\n' || c == '\t') // Ler espaços em branco e quebra de
-                                                                  // linha
+        else if (isBlank(c)) // Le espaços em branco e quebra de linha
             return 1;
 
         else if (c == '0') // Le char (hexa) ou números iniciados em 0
@@ -876,7 +923,7 @@ class Lexer {
         else if (isLetter(c) || c == '_') // Le ID
             return 18;
 
-        else if (isValid(c)) // Verifica se o caractere e valido dentro do arquivo da linguagem
+        else if (isValid(c)) // Verifica se o caractere e' valido dentro do arquivo da linguagem
             return 24;
 
         else
