@@ -4,10 +4,6 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        runParser();
-    }
-
-    public static void runParser() throws IOException {
         Parser p = new Parser();
         p.S();
     }
@@ -25,10 +21,9 @@ class Parser {
         if (token.tag == esperado) {
             readNextToken();
         } else if (token.tag == Token.EOF) {
-            System.out.print(lexer.line - 1 + "\nfim de arquivo nao esperado.");
-            exit();
+            errorEOF();
         } else {
-            exitError();
+            errorNotExpectedToken();
         }
     }
 
@@ -43,10 +38,17 @@ class Parser {
         }
     }
 
-    void exitError() {
-        // PODE ENTREGAR FIM DE ARQUIVO NAO ESPERADO
-        String lexeme = token.lexeme;
-        System.out.println(lexer.line + "\ntoken nao esperado [" + lexeme + "].");
+    void errorEOF() {
+        System.out.print(lexer.line + "\nfim de arquivo nao esperado.");
+        exit();
+    }
+
+    void errorNotExpectedToken() {
+        if (token.tag == Token.EOF) {
+            errorEOF();
+        }
+
+        System.out.print(lexer.line + "\ntoken nao esperado [" + token.lexeme + "].");
         exit();
     }
 
@@ -54,24 +56,27 @@ class Parser {
         System.exit(1);
     }
 
+    void EOF() {
+        if (token.tag == Token.EOF) {
+            CasaToken(Token.EOF);
+            System.out.print(lexer.line + " linhas compiladas.");
+            exit();
+        }
+    }
+
     public void S() {
         readNextToken();
+        EOF();
         while (Declaracao() || Comandos())
             ;
-        if (token.tag == Token.EOF) {
-            System.out.println(lexer.line + " linhas compiladas.");
-            exit();
-        } else {
-            exitError();
-        }
-
     }
 
     boolean Declaracao() {
         if (Tipo()) {
             if (!ListaDeIds())
-                exitError();
+                errorNotExpectedToken();
             CasaToken(Token.SEMICOLON);
+            EOF();
             return true;
 
         } else if (token.tag == Token.CONST) {
@@ -79,8 +84,9 @@ class Parser {
             CasaToken(Token.ID);
             CasaToken(Token.EQ);
             if (!Expressao())
-                exitError();
+                errorNotExpectedToken();
             CasaToken(Token.SEMICOLON);
+            EOF();
             return true;
 
         }
@@ -91,15 +97,12 @@ class Parser {
         if (token.tag == Token.INT) {
             CasaToken(Token.INT);
             return true;
-
         } else if (token.tag == Token.FLOAT) {
             CasaToken(Token.FLOAT);
             return true;
-
         } else if (token.tag == Token.STRING) {
             CasaToken(Token.STRING);
             return true;
-
         } else if (token.tag == Token.CHAR) {
             CasaToken(Token.CHAR);
             return true;
@@ -113,8 +116,10 @@ class Parser {
             while (Comando())
                 ;
             CasaToken(Token.CLOSE_BRACE);
+            EOF();
             return true;
         } else if (Comando()) {
+            EOF();
             return true;
         }
         return false;
@@ -129,6 +134,8 @@ class Parser {
         if (token.tag == Token.SEMICOLON) {
             CasaToken(Token.SEMICOLON);
             return true;
+        } else if (token.tag == Token.EOF) {
+            errorEOF();
         }
         return false;
     }
@@ -139,7 +146,7 @@ class Parser {
                 if (token.tag == Token.COMMA) {
                     CasaToken(Token.COMMA);
                     if (!Di())
-                        exitError();
+                        errorNotExpectedToken();
                 } else {
                     return true;
                 }
@@ -154,7 +161,7 @@ class Parser {
             if (token.tag == Token.ASSIGN) {
                 CasaToken(Token.ASSIGN);
                 if (!Const())
-                    exitError();
+                    errorNotExpectedToken();
             }
             return true;
         }
@@ -187,13 +194,13 @@ class Parser {
             if (token.tag == Token.OPEN_BRACKET) {
                 CasaToken(Token.OPEN_BRACKET);
                 if (!Expressao())
-                    exitError();
+                    errorNotExpectedToken();
                 CasaToken(Token.CLOSE_BRACKET);
                 return true;
             }
             CasaToken(Token.ASSIGN);
             if (!Expressao())
-                exitError();
+                errorNotExpectedToken();
             return true;
         }
         return false;
@@ -203,9 +210,9 @@ class Parser {
         if (token.tag == Token.WHILE) {
             CasaToken(Token.WHILE);
             if (!Expressao())
-                exitError();
+                errorNotExpectedToken();
             if (!Comandos())
-                exitError();
+                errorNotExpectedToken();
             return true;
         }
         return false;
@@ -215,12 +222,12 @@ class Parser {
         if (token.tag == Token.IF) {
             CasaToken(Token.IF);
             if (!Expressao())
-                exitError();
+                errorNotExpectedToken();
             if (!Comandos())
-                exitError();
+                errorNotExpectedToken();
             CasaToken(Token.ELSE);
             if (!Comandos())
-                exitError();
+                errorNotExpectedToken();
             return true;
         }
         return false;
@@ -233,7 +240,7 @@ class Parser {
             if (token.tag == Token.ID) {
                 CasaToken(Token.ID);
             } else if (!Expressao()) {
-                exitError();
+                errorNotExpectedToken();
             }
             CasaToken(Token.CLOSE_PARENTHESIS);
             return true;
@@ -246,12 +253,12 @@ class Parser {
             CasaToken(token.tag);
             CasaToken(Token.OPEN_PARENTHESIS);
             if (!Expressao())
-                exitError();
+                errorNotExpectedToken();
             do {
                 if (token.tag == Token.COMMA) {
                     CasaToken(Token.COMMA);
                     if (!Expressao())
-                        exitError();
+                        errorNotExpectedToken();
                 } else {
                     CasaToken(Token.CLOSE_PARENTHESIS);
                     return true;
@@ -266,13 +273,13 @@ class Parser {
             do {
                 if (Comp()) {
                     if (!ExpS())
-                        exitError();
+                        errorNotExpectedToken();
                 } else {
                     return true;
                 }
             } while (true);
         } else {
-            exitError();
+            errorNotExpectedToken();
         }
 
         return false;
@@ -314,7 +321,7 @@ class Parser {
                 if (token.tag == Token.MINUS || token.tag == Token.PLUS || token.tag == Token.OR) {
                     CasaToken(token.tag);
                     if (!T())
-                        exitError();
+                        errorNotExpectedToken();
                 } else {
                     return true;
                 }
@@ -329,7 +336,7 @@ class Parser {
             do {
                 if (Op()) {
                     if (!F())
-                        exitError();
+                        errorNotExpectedToken();
                 } else {
                     return true;
                 }
@@ -368,7 +375,7 @@ class Parser {
             if (token.tag == Token.OPEN_BRACKET) {
                 CasaToken(Token.OPEN_BRACKET);
                 if (!Expressao())
-                    exitError();
+                    errorNotExpectedToken();
                 CasaToken(Token.CLOSE_BRACKET);
             }
             return true;
@@ -382,13 +389,13 @@ class Parser {
         } else if (token.tag == Token.INT) {
             CasaToken(Token.FLOAT);
             if (!P())
-                exitError();
+                errorNotExpectedToken();
             return true;
 
         } else if (token.tag == Token.FLOAT) {
             CasaToken(Token.FLOAT);
             if (!P())
-                exitError();
+                errorNotExpectedToken();
             return true;
         }
 
@@ -399,7 +406,7 @@ class Parser {
         if (token.tag == Token.OPEN_PARENTHESIS) {
             CasaToken(Token.OPEN_PARENTHESIS);
             if (!Expressao())
-                exitError();
+                errorNotExpectedToken();
             CasaToken(Token.CLOSE_PARENTHESIS);
             return true;
         }
@@ -463,16 +470,16 @@ class Lexer {
 
     // Le proximo caractere
     private int readch() throws IOException {
-        return (int) System.in.read();
+        return System.in.read();
     }
 
     // O metodo segue o automato gerado para resolver a analise lexica
     // e retorna um Token valido ou null para Token com erro
     public Token scan() throws IOException {
         while (state != 5) {
-            if (!giveBack && state != 5 && state != 23 && state != 24 && state != 25 && state != 26) {
+            if (!giveBack && state != 5 && state != 23 && state != 24 && state != 25) {
                 c = readch();
-                if ((char) c == '\n') {
+                if (c == '\n') {
                     line++;
                 }
             }
@@ -480,110 +487,109 @@ class Lexer {
                 case 1: // Define qual estado seguir a partir do caractere lido
                     if (c == -1) {
                         state = 26; // Programa compilado com sucesso
-                    } else if (c == '\n' || c == '\t' || c == '\r' || c == ' ') { // Leitura de espacoes em branco e \n
+                    } else if (c == '\n' || c == '\t' || c == '\r' || c == ' ') { // Leitura de espacos em branco e \n
                         state = 1;
                     } else {
                         lexeme += (char) c;
                         state = checkStateFrom1(c); // Gera proximo estado do automato
                     }
                     break;
+
                 case 2: // Leitura de char (hexa) ou inteiros e reais iniciados com 0
-                    if ((char) c == 'x' || (char) c == 'X') {
+                    if (c == 'x' || c == 'X') {
                         lexeme += (char) c;
                         state = 3; // char hexa
                     } else if (c == '.') {
                         lexeme += (char) c;
                         state = 11; // numeros reais iniciados com 0.
-                    } else if (isDigit((char) c)) {
+                    } else if (isDigit(c)) {
                         lexeme += (char) c;
-                        state = 10; // numeros iniciados com 0 e seguidos de . ou numeros
+                        state = 10; // numeros iniciados com 0 e seguidos de '.' ou numeros
                     } else {
-                        state = 5; // Estado final. Encontrou apenas 0
+                        state = 5; // Estado final. Encontrou apenas '0'
                         giveBack = true; // Devolve c
                     }
                     break;
+
                 case 3: // Leitura de char (hexa)
-                    if (isHexValid((char) c)) {
+                    if (isHexValid(c)) {
                         lexeme += (char) c;
                         state = 4; // Continua a leitura de um hexa
-                    } else if (c == -1) {
-                        state = 23; // Fim de arquivo nao esperado
-                    } else if (isValid((char) c)) {
-                        lexeme += (char) c;
+                    } else if (isValid(c) || c == -1) {
                         state = 24; // Lexema nao identificado
                     } else {
                         state = 25; // Caractere invalido
                     }
                     break;
+
                 case 4: // Leitura de char (hexa)
-                    if (isHexValid((char) c)) {
+                    if (isHexValid(c)) {
                         lexeme += (char) c;
                         state = 5; // Terminou a leitura de um hexa
-                    } else if (c == -1) {
-                        state = 23; // Fim de arquivo nao esperado
-                    } else if (isValid((char) c)) {
-                        lexeme += (char) c;
+                    } else if (isValid((char) c) || c == -1) {
                         state = 24; // Lexema nao identificado
                     } else {
                         state = 25; // Caractere invalido
                     }
                     break;
+
                 case 6: // Char no formato 'c'
-                    if (isValid((char) c) && c != '\n') {
+                    if (isValid(c) && c != '\n') {
                         state = 7; // Continua leitura de char no formato 'c'
                         lexeme += (char) c;
-                    } else if (c == -1) {
-                        state = 23; // Fim de arquivo nao esperado
-                    } else if (isValid((char) c)) {
+                    } else if (isValid(c) || c == -1) {
                         state = 24; // Lexema nao identificado
                     } else {
                         state = 25; // Caractere invalido
                     }
                     break;
+
                 case 7: // Char no formato 'c'
-                    if ((char) c == '\'') {
+                    if (c == '\'') {
                         state = 5; // Fim de leitura de char
                         lexeme += (char) c;
                     } else if (c == -1) {
                         state = 23; // Fim de arquivo nao esperado
-                    } else if (isValid((char) c)) {
+                    } else if (isValid(c)) {
                         state = 24; // Lexema nao identificado
                     } else {
                         state = 25; // Caractere invalido
                     }
                     break;
+
                 case 8: // Leitura de string no formato "string"
-                    if ((char) c == '\"') {
+                    if (c == '\"') {
+                        lexeme += '$'; // Concatena flag de fim de string
                         lexeme += (char) c;
                         state = 5; // Fim de leitura de string
-                    } else if (isValidStr((char) c)) {
+                    } else if (isValidStr(c)) {
                         lexeme += (char) c;
                         if (lexeme.length() > 256) { // Verifica tamanho de string
                             state = 24; // Lexema nao identificado
                         }
-                    } else if (c == -1) {
-                        state = 23; // Fim de arquivo nao esperado
-                    } else if (isValid((char) c)) {
+                    } else if (isValid(c) || c == -1) {
                         state = 24; // Lexema nao identificado
                     } else {
                         state = 25; // Caractere invalido
                     }
                     break;
+
                 case 9: // Numeros inteiros e reais iniciados com '-', ou apenas '-'
-                    if (isDigit((char) c)) {
+                    if (isDigit(c)) {
                         state = 10; // Leitura de numeros reais ou inteiros negativos
                         lexeme += (char) c;
-                    } else if ((char) c == '.') {
-                        state = 11; // Numeros reais negativos iniciados com '-.''
+                    } else if (c == '.') {
+                        state = 11; // Numeros reais negativos iniciados com '-.' (-.1, -.2, -.3, ...)
                         lexeme += (char) c;
                     } else {
                         giveBack = true;
                         state = 5; // Fim de leitura do token '-'
                     }
                     break;
-                case 10: // Continua leitura de inteiros ou reais positivos ou negativos
-                    if (isDigit((char) c)) {
-                        lexeme += (char) c; // Concatena n numeros inteiros
+
+                case 10: // Continua leitura de inteiros ou reais (positivos ou negativos)
+                    if (isDigit(c)) {
+                        lexeme += (char) c; // Concatena 'n' numeros inteiros
                     } else if ((char) c == '.') {
                         lexeme += (char) c;
                         state = 11; // Concatena '.' e segue para estado de leitura de tokens reais
@@ -592,20 +598,20 @@ class Lexer {
                         state = 5; // Fim de leitura de numero inteiro positivo ou negativo
                     }
                     break;
+
                 case 11: // Numeros reais
-                    if (isDigit((char) c)) {
+                    if (isDigit(c)) {
                         lexeme += (char) c;
                         state = 12; // Continua leitura de numero real
-                    } else if (c == -1) {
-                        state = 23; // Fim de arquivo nao esperado
-                    } else if (isValid((char) c)) {
+                    } else if (isValid(c) || c == -1) {
                         state = 24; // Lexema nao esperado
                     } else {
                         state = 25; // Caractere invalido
                     }
                     break;
+
                 case 12: // Leitura de numeros reais positivos ou negativos
-                    if (isDigit((char) c)) {
+                    if (isDigit(c)) {
                         lexeme += (char) c;
                         if (!checkValidPrecision()) {
                             state = 24; // Lexema nao esperado (precisao acima de 6 digitos)
@@ -615,8 +621,9 @@ class Lexer {
                         state = 5; // Fim de leitura de numero real
                     }
                     break;
+
                 case 13: // Leitura de '!' ou '!='
-                    if ((char) c == '=') {
+                    if (c == '=') {
                         lexeme += (char) c;
                         state = 5; // Fim de leitura de '!='
                     } else {
@@ -624,8 +631,9 @@ class Lexer {
                         state = 5; // Fim de leitura de '!'
                     }
                     break;
+
                 case 14: // Leitura de '<', '<=' ou '<-'
-                    if ((char) c == '-' || (char) c == '=') {
+                    if (c == '-' || c == '=') {
                         lexeme += (char) c;
                         state = 5; // Fim de leitura de '<-' ou '<='
                     } else {
@@ -633,8 +641,9 @@ class Lexer {
                         state = 5; // Fim de leitura de '<'
                     }
                     break;
+
                 case 15: // Leitura de '>' ou '>='
-                    if ((char) c == '=') {
+                    if (c == '=') {
                         lexeme += (char) c;
                         state = 5; // Fim de leitura de '>='
                     } else {
@@ -642,32 +651,31 @@ class Lexer {
                         state = 5; // Fim de leitura de '>'
                     }
                     break;
+
                 case 16: // Leitura de '&&'
-                    if ((char) c == '&') {
+                    if (c == '&') {
                         lexeme += (char) c;
                         state = 5; // Fim de leitura de '&&'
-                    } else if (c == -1) {
-                        state = 23; // Fim de arquivo nao esperado
-                    } else if (isValid((char) c)) {
+                    } else if (isValid(c) || c == -1) {
                         state = 24; // Caractere nao esperado
                     } else {
                         state = 25; // Caractere invalido
                     }
                     break;
+
                 case 17: // Leitura de '||'
-                    if ((char) c == '|') {
+                    if (c == '|') {
                         lexeme += (char) c;
                         state = 5; // Fim de leitura de '||'
-                    } else if (c == -1) {
-                        state = 23; // Fim de arquivo nao esperado
-                    } else if (isValid((char) c)) {
+                    } else if (isValid(c) || c == -1) {
                         state = 24; // Caractere nao esperado
                     } else {
                         state = 25; // Caractere invalido
                     }
                     break;
+
                 case 18: // Leitura de ID e tokens
-                    if (isLetter((char) c) || isDigit((char) c) || (char) c == '.' || (char) c == '_') {
+                    if (isLetter(c) || isDigit(c) || c == '.' || c == '_') {
                         lexeme += (char) c;
                         if (lexeme.length() > 32) {
                             state = 24; // Verifica se ID possui tamanho permitido
@@ -677,8 +685,9 @@ class Lexer {
                         state = 5; // Retorna ID lido
                     }
                     break;
+
                 case 19: // Le '/' ou comentario
-                    if ((char) c == '*') {
+                    if (c == '*') {
                         state = 20; // Le comentario
                         lexeme = "";
                     } else {
@@ -686,53 +695,47 @@ class Lexer {
                         state = 5; // Retorna token '/'
                     }
                     break;
+
                 case 20: // Fecha ou continua comentario
-                    if ((char) c == '*') {
-                        state = 22; // Tenta fechar comentario
-                    } else if (isValid((char) c)) {
-                        state = 21; // Le comentario
+                    if (c == '*') {
+                        state = 21; // Tenta fechar comentario
+                    } else if (isValid(c)) {
+                        break;
                     } else if (c == -1) {
                         state = 23; // Fim de arquivo nao esperado
                     } else {
                         state = 25; // Caractere invalido
                     }
                     break;
-                case 21: // Le comentario
-                    if ((char) c == '*') {
-                        state = 22; // Tenta fechar comentario
-                    } else if (isValid((char) c)) {
-                        break; // Continua leitura de comentario
-                    } else if (c == -1) {
-                        state = 23; // Fim de arquivo nao esperado
-                    } else {
-                        state = 25; // Caractere invalido
-                    }
-                    break;
-                case 22: // Fecha ou continua comentario
-                    if ((char) c == '/') {
+
+                case 21: // Fecha ou continua comentario
+                    if (c == '*') {
+                        break; // Continua esperando para fechar o comentario
+                    } else if (c == '/') {
                         lexeme = "";
-                        state = 1; // Fecha comentario e volta ao estado inicial
-                    } else if (isValid((char) c)) {
-                        state = 21; // Continua comentario
-                    } else if (c == -1) {
-                        state = 23; // Fim de arquivo nao esperado
+                        state = 1; // Termina leitura de comentario
                     } else {
-                        state = 25; // Caractere invalido
+                        state = 20;
                     }
                     break;
+
                 case 23: // ERRO: Fim de arquivo nao esperado
                     errorEOFNotExpected();
-                    return null;
+                    break;
+
                 case 24: // ERRO: Lexema nao identificado
                     if (c == '\n') {
                         line--;
                     }
                     errorNotIdentifiedLexeme(lexeme);
-                    return null;
+                    break;
+
                 case 25: // ERRO: Caractere invalido
                     errorInvalidCharacter();
-                    return null;
-                case 26:
+                    break;
+
+                case 26: // Retorna ao analisador sintatico que chegou ao fim do arquivo sem erro
+                         // lexico
                     return new Token("EOF", Token.EOF);
             }
         }
@@ -742,13 +745,17 @@ class Lexer {
         if (t == null) {
             if (isLetter(lexeme.charAt(0)) || lexeme.charAt(0) == '_')
                 t = st.insertToken(lexeme, new Token(lexeme, Token.ID)); // Token e' ID
-            else if (lexeme.charAt(0) == '\''
-                    || (lexeme.length() > 2) && (lexeme.charAt(0) == '0' && lexeme.charAt(1) == 'x'))
+
+            else if (lexeme.charAt(0) == '\'' || (lexeme.length() > 2)
+                    && (lexeme.charAt(0) == '0' && (lexeme.charAt(1) == 'x' || lexeme.charAt(1) == 'X')))
                 t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_CHAR)); // Token e' char
+
             else if (lexeme.charAt(0) == '"')
                 t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_STRING)); // Token e' String
+
             else if (lexeme.contains("."))
                 t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_FLOAT)); // Token e' float
+
             else
                 t = st.insertToken(lexeme, new Token(lexeme, Token.VALUE_INT)); // Token e' int
         }
@@ -758,9 +765,9 @@ class Lexer {
         if (giveBack) {
             if (c == -1) {
                 state = 26; // Fim de arquivo sem erro lexico
-            } else if ((c != '\n') && (char) c != ' ' && (char) c != '\r' && c != '\t') {
+            } else if ((c != '\n') && c != ' ' && c != '\r' && c != '\t') {
                 lexeme += (char) c;
-                state = checkStateFrom1((char) c); // Verifica o proximo estado caso o caractere tenha sido devolvido
+                state = checkStateFrom1(c); // Verifica o proximo estado caso o caractere tenha sido devolvido
             }
             giveBack = false;
         }
@@ -784,9 +791,9 @@ class Lexer {
     }
 
     // Verifica se os digitos sao validos para numeros hexadecimais
-    private boolean isHexValid(char c) {
+    private boolean isHexValid(int c) {
         String hex = "0123456789abcdefABCDEF";
-        if (hex.contains(Character.toString(c))) {
+        if (hex.contains(Character.toString((char) c))) {
             return true;
         }
         return false;
@@ -794,83 +801,97 @@ class Lexer {
 
     // Metodo para decidir qual estado seguir a partir do estado 1
     private int checkStateFrom1(int c) {
-        if ((char) c == -1) {
+        if (c == -1)
             return 26;
-        } else if ((char) c == ' ' || (char) c == '\r' || c == '\n' || c == '\t') { // Ler espaços em branco e quebra de
-                                                                                    // linha
+
+        else if (c == ' ' || c == '\r' || c == '\n' || c == '\t') // Ler espaços em branco e quebra de
+                                                                  // linha
             return 1;
-        } else if ((char) c == '0') { // Le char (hexa) ou números iniciados em 0
+
+        else if (c == '0') // Le char (hexa) ou números iniciados em 0
             return 2;
-        } else if (isDigit((char) c)) { // Le numeros inteiros ou reais
+
+        else if (isDigit(c)) // Le numeros inteiros ou reais
             return 10;
-        } else if ((char) c == '.') { // Le numeros reais iniciados com '.'
+
+        else if (c == '.') // Le numeros reais iniciados com '.'
             return 11;
-        } else if ((char) c == '-') { // Le numeros inteiros ou reais iciados com '-'
+
+        else if (c == '-') // Le numeros inteiros ou reais iciados com '-'
             return 9;
-        } else if ((char) c == '/') { // Le comentario ou token '/'
+
+        else if (c == '/') // Le comentario ou token '/'
             return 19;
-        } else if ((char) c == '"') { // Le String
+
+        else if (c == '"') // Le String
             return 8;
-        } else if ((char) c == '\'') { // Le char
+
+        else if (c == '\'') // Le char
             return 6;
-        } else if (isToken((char) c)) { // Le tokens simples
+
+        else if (isToken(c)) // Le tokens simples
             return 5;
-        } else if ((char) c == '!') { // Le ! ou !=
+
+        else if (c == '!') // Le ! ou !=
             return 13;
-        } else if ((char) c == '<') { // Le < <= ou <-
+
+        else if (c == '<') // Le <, <= ou <-
             return 14;
-        } else if ((char) c == '>') { // Le > ou >=
+
+        else if (c == '>') // Le > ou >=
             return 15;
-        } else if ((char) c == '&') { // Le &&
+
+        else if (c == '&') // Le &&
             return 16;
-        } else if ((char) c == '|') { // Le ||
+
+        else if (c == '|') // Le ||
             return 17;
-        } else if (isLetter((char) c) || (char) c == '_') { // Le ID
+
+        else if (isLetter(c) || c == '_') // Le ID
             return 18;
-        } else if (isValid((char) c)) { // Verifica se o caractere e valido dentro do arquivo da linguagem
+
+        else if (isValid(c)) // Verifica se o caractere e valido dentro do arquivo da linguagem
             return 24;
-        } else {
-            return 25;
-        }
+
+        else
+            return 25; // Caractere invalido
     }
 
-    // Verifica se o caractere e valido dentro do arquivo da linguagem
-    private boolean isValid(char c) {
+    // Verifica se o caractere e' valido dentro do arquivo da linguagem
+    private boolean isValid(int c) {
         String valid = " _.,;:()[]{}+-\"\'/|\\&%!?><=\n\r*";
-        if (isDigit(c) || isLetter(c) || valid.contains(Character.toString(c))) {
+        if (isDigit(c) || isLetter(c) || valid.contains(Character.toString((char) c)))
             return true;
-        }
         return false;
     }
 
     // Verifica a validade dos caracteres inseridos numa string
-    private boolean isValidStr(char c) {
-        if (isValid((char) c) && c != '\n' && c != '\r' && c != '$')
+    private boolean isValidStr(int c) {
+        if (isValid(c) && c != '\n' && c != '\r' && c != '$')
             return true;
         return false;
     }
 
-    // Verifica se o caractere e um token unico
-    private boolean isToken(char c) {
+    // Verifica se o caractere e' um token unico
+    private boolean isToken(int c) {
         String valid = "=(),+*/;{}[]";
-        if (valid.contains(Character.toString(c))) {
+        if (valid.contains(Character.toString((char) c)))
             return true;
-        }
         return false;
     }
 
-    // Verifica se o caractere e um numero
-    private boolean isDigit(char c) {
+    // Verifica se o caractere e' um numero
+    private boolean isDigit(int c) {
         String numbers = "0123456789";
-        if (numbers.contains(Character.toString(c)))
+        if (numbers.contains(Character.toString((char) c)))
             return true;
         return false;
     }
 
-    // Verifica se o caractere e uma letra
-    public boolean isLetter(char c) {
+    // Verifica se o caractere e' uma letra
+    public boolean isLetter(int c) {
         String letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        if (letters.contains(Character.toString(c)))
+        if (letters.contains(Character.toString((char) c)))
             return true;
         return false;
     }
@@ -879,8 +900,8 @@ class Lexer {
     // nn
     // lexema nao identificado[lex].
     void errorNotIdentifiedLexeme(String lexeme) {
-        lexeme = lexeme.replace("\n", "");
         System.out.print(line + "\nlexema nao identificado [" + lexeme + "].");
+        System.exit(1);
     }
 
     // Erro para caracteres invalidos:
@@ -890,6 +911,7 @@ class Lexer {
         if (c == '\n')
             line--;
         System.out.print(line + "\ncaractere invalido.");
+        System.exit(1);
     }
 
     // Erro para fim de arquivo nao esperado:
@@ -897,6 +919,7 @@ class Lexer {
     // fim de arquivo nao esperado.
     void errorEOFNotExpected() {
         System.out.print(line + "\nfim de arquivo nao esperado.");
+        System.exit(1);
     }
 }
 
