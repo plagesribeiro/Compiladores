@@ -1,5 +1,4 @@
 import java.util.Hashtable;
-
 import java.io.IOException;
 
 public class Main {
