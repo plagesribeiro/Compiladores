@@ -476,7 +476,7 @@ class Lexer {
     // e retorna um Token valido ou quebra execucao caso encontre algum problema
     public Token scan() throws IOException {
         while (state != 5) {
-            if (!giveBack && state != 5 && state != 23 && state != 24 && state != 25) {
+            if (isNextCharReadable(c)) {
                 c = readch();
                 if (c == '\n') {
                     line++;
@@ -484,10 +484,10 @@ class Lexer {
             }
             switch (state) {
                 case 1: // Define qual estado seguir a partir do caractere lido
-                    if (c == -1) {
+                    if (isEOF(c)) {
                         state = 26; // Programa compilado com sucesso
-                    } else if (c == '\n' || c == '\t' || c == '\r' || c == ' ') { // Leitura de espacos em branco e \n
-                        state = 1;
+                    } else if (isBlank(c)) { // Leitura de espacos em branco e \n
+                        initialState();
                     } else {
                         lexeme += (char) c;
                         state = checkStateFrom1(c); // Gera proximo estado do automato
@@ -514,7 +514,7 @@ class Lexer {
                     if (isHexValid(c)) {
                         lexeme += (char) c;
                         state = 4; // Continua a leitura de um hexa
-                    } else if (isValid(c) || c == -1) {
+                    } else if (isValid(c) || isEOF(c)) {
                         state = 24; // Lexema nao identificado
                     } else {
                         state = 25; // Caractere invalido
@@ -525,7 +525,7 @@ class Lexer {
                     if (isHexValid(c)) {
                         lexeme += (char) c;
                         state = 5; // Terminou a leitura de um hexa
-                    } else if (isValid((char) c) || c == -1) {
+                    } else if (isValid((char) c) || isEOF(c)) {
                         state = 24; // Lexema nao identificado
                     } else {
                         state = 25; // Caractere invalido
@@ -536,7 +536,7 @@ class Lexer {
                     if (isValid(c) && c != '\n') {
                         state = 7; // Continua leitura de char no formato 'c'
                         lexeme += (char) c;
-                    } else if (isValid(c) || c == -1) {
+                    } else if (isValid(c) || isEOF(c)) {
                         state = 24; // Lexema nao identificado
                     } else {
                         state = 25; // Caractere invalido
@@ -547,7 +547,7 @@ class Lexer {
                     if (c == '\'') {
                         state = 5; // Fim de leitura de char
                         lexeme += (char) c;
-                    } else if (c == -1) {
+                    } else if (isEOF(c)) {
                         state = 23; // Fim de arquivo nao esperado
                     } else if (isValid(c)) {
                         state = 24; // Lexema nao identificado
@@ -566,7 +566,7 @@ class Lexer {
                         if (lexeme.length() > 256) { // Verifica tamanho de string
                             state = 24; // Lexema nao identificado
                         }
-                    } else if (isValid(c) || c == -1) {
+                    } else if (isValid(c) || isEOF(c)) {
                         state = 24; // Lexema nao identificado
                     } else {
                         state = 25; // Caractere invalido
@@ -602,7 +602,7 @@ class Lexer {
                     if (isDigit(c)) {
                         lexeme += (char) c;
                         state = 12; // Continua leitura de numero real
-                    } else if (isValid(c) || c == -1) {
+                    } else if (isValid(c) || isEOF(c)) {
                         state = 24; // Lexema nao esperado
                     } else {
                         state = 25; // Caractere invalido
@@ -612,7 +612,7 @@ class Lexer {
                 case 12: // Leitura de numeros reais positivos ou negativos
                     if (isDigit(c)) {
                         lexeme += (char) c;
-                        if (!checkValidPrecision()) {
+                        if (!checkFloatPrecision()) {
                             state = 24; // Lexema nao esperado (precisao acima de 6 digitos)
                         }
                     } else {
@@ -655,7 +655,7 @@ class Lexer {
                     if (c == '&') {
                         lexeme += (char) c;
                         state = 5; // Fim de leitura de '&&'
-                    } else if (isValid(c) || c == -1) {
+                    } else if (isValid(c) || isEOF(c)) {
                         state = 24; // Caractere nao esperado
                     } else {
                         state = 25; // Caractere invalido
@@ -666,7 +666,7 @@ class Lexer {
                     if (c == '|') {
                         lexeme += (char) c;
                         state = 5; // Fim de leitura de '||'
-                    } else if (isValid(c) || c == -1) {
+                    } else if (isValid(c) || isEOF(c)) {
                         state = 24; // Caractere nao esperado
                     } else {
                         state = 25; // Caractere invalido
@@ -700,7 +700,7 @@ class Lexer {
                         state = 21; // Tenta fechar comentario
                     } else if (isValid(c)) {
                         break;
-                    } else if (c == -1) {
+                    } else if (isEOF(c)) {
                         state = 23; // Fim de arquivo nao esperado
                     } else {
                         state = 25; // Caractere invalido
@@ -712,7 +712,7 @@ class Lexer {
                         break; // Continua esperando para fechar o comentario
                     } else if (c == '/') {
                         lexeme = "";
-                        state = 1; // Termina leitura de comentario
+                        initialState(); // Termina leitura de comentario
                     } else {
                         state = 20;
                     }
@@ -760,9 +760,9 @@ class Lexer {
         }
 
         lexeme = ""; // Reseta valor atual de lexema para leitura do proximo token
-        state = 1; // Reseta o automato para o estado inicial
+        initialState(); // Reseta o automato para o estado inicial
         if (giveBack) {
-            if (c == -1) {
+            if (isEOF(c)) {
                 state = 26; // Fim de arquivo sem erro lexico
             } else if ((c != '\n') && c != ' ' && c != '\r' && c != '\t') {
                 lexeme += (char) c;
@@ -773,20 +773,47 @@ class Lexer {
         return t; // Retorna o Token lido
     }
 
+    // Verifica se e' necessario ler proximo caractere com base na necessidade de
+    // devolver, estado final ou erro
+    private boolean isNextCharReadable(int c) {
+        if (!giveBack && state != 5 && state != 23 && state != 24 && state != 25)
+            return true;
+        return false;
+    }
+
     // Valida a precisao para numeros float
-    private boolean checkValidPrecision() {
+    private boolean checkFloatPrecision() {
         int count = 0;
-        for (int i = 0; i < lexeme.length(); i++) {
-            if (lexeme.charAt(i) == '.') {
-                for (int j = i + 1; j < lexeme.length(); j++) {
-                    count++;
-                    if (count > 6) {
-                        return false;
+        if (lexeme.length() > 7) {
+            return false;
+        } else {
+            for (int i = 0; i < lexeme.length(); i++) {
+                if (lexeme.charAt(i) == '.') {
+                    for (int j = i + 1; j < lexeme.length(); j++) {
+                        count++;
+                        if (count > 6) {
+                            return false;
+                        }
                     }
                 }
             }
         }
         return true;
+    }
+
+    // Reseta o estado para o inicial
+    void initialState() {
+        state = 1;
+    }
+
+    // Define estado como estado final
+    void finalState() {
+        state = 5;
+    }
+
+    // Verifica se e' fim de arquivo
+    private boolean isEOF(int c) {
+        return c == -1;
     }
 
     // Verifica se os digitos sao validos para numeros hexadecimais
@@ -800,7 +827,7 @@ class Lexer {
 
     // Metodo para decidir qual estado seguir a partir do estado 1
     private int checkStateFrom1(int c) {
-        if (c == -1)
+        if (isEOF(c))
             return 26;
 
         else if (c == ' ' || c == '\r' || c == '\n' || c == '\t') // Ler espaços em branco e quebra de
@@ -854,6 +881,13 @@ class Lexer {
 
         else
             return 25; // Caractere invalido
+    }
+
+    // Verifica se o caractere e' branco ou enter
+    private boolean isBlank(int c) {
+        if (c == '\n' || c == '\t' || c == '\r' || c == ' ')
+            return true;
+        return false;
     }
 
     // Verifica se o caractere e' valido dentro do arquivo da linguagem
