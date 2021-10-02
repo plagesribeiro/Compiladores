@@ -1,15 +1,35 @@
-/* Exemplo de Programa na linguagem L 
-
-int n<-1;
-string nome;
-const MAXITER=10;
-
-write("Digite seu nome: ");
-readln(nome);
-
-float percentual;
-while n<=MAXITER {
-  percentual<-float(n)/MAXITER;
-  writeln(percentual,": Ola' ",nome);
-  n<-n+1;
-}
+        this.st.insertToken("const", new Token("const", Token.CONST));
+        this.st.insertToken("int", new Token("int", Token.INT));
+        this.st.insertToken("char", new Token("char", Token.INT));
+        this.st.insertToken("while", new Token("while", Token.WHILE));
+        this.st.insertToken("if", new Token("if", Token.IF));
+        this.st.insertToken("float", new Token("float", Token.FLOAT));
+        this.st.insertToken("else", new Token("else", Token.ELSE));
+        this.st.insertToken("&&", new Token("&&", Token.AND));
+        this.st.insertToken("||", new Token("||", Token.OR));
+        this.st.insertToken("!", new Token("!", Token.NOT));
+        this.st.insertToken("<-", new Token("<-", Token.ASSIGN));
+        this.st.insertToken("=", new Token("=", Token.EQ));
+        this.st.insertToken("(", new Token("(", Token.OPEN_PARENTHESIS));
+        this.st.insertToken(")", new Token(")", Token.CLOSE_PARENTHESIS));
+        this.st.insertToken("<", new Token("<", Token.GREATER));
+        this.st.insertToken(">", new Token(">", Token.LOWER));
+        this.st.insertToken("!=", new Token("!=", Token.NOT_EQUAL));
+        this.st.insertToken(">=", new Token(">=", Token.GREATER_EQUAL));
+        this.st.insertToken("<=", new Token("<=", Token.LOWER_EQUAL));
+        this.st.insertToken(",", new Token(",", Token.COMMA));
+        this.st.insertToken("+", new Token("+", Token.PLUS));
+        this.st.insertToken("-", new Token("-", Token.MINUS));
+        this.st.insertToken("*", new Token("*", Token.MULTIPLY));
+        this.st.insertToken("/", new Token("/", Token.SLASH_FORWARD));
+        this.st.insertToken(";", new Token(";", Token.SEMICOLON));
+        this.st.insertToken("{", new Token("{", Token.OPEN_BRACE));
+        this.st.insertToken("}", new Token("}", Token.CLOSE_BRACE));
+        this.st.insertToken("readln", new Token("readln", Token.READLN));
+        this.st.insertToken("div", new Token("div", Token.DIV));
+        this.st.insertToken("write", new Token("write", Token.WRITE));
+        this.st.insertToken("writeln", new Token("writeln", Token.WRITELN));
+        this.st.insertToken("mod", new Token("mod", Token.MOD));
+        this.st.insertToken("[", new Token("[", Token.OPEN_BRACKET));
+        this.st.insertToken("]", new Token("]", Token.CLOSE_BRACKET));
+        this.st.insertToken("string", new Token("string", Token.STRING));

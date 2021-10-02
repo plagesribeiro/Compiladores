@@ -1,15 +1,15 @@
-/* Exemplo de Programa na linguagem L 
+/* exemplo de programa na linguagem l */
 
 int n<-1;
 string nome;
-const MAXITER=10;
-
-write("Digite seu nome: ");
-readln(nome);
+const maxiter=10;
 
 float percentual;
-while n<=MAXITER {
-  percentual<-float(n)/MAXITER;
-  writeln(percentual,": Ola' ",nome);
+
+if n<2 { ;  else { ; }
+
+while n<=maxiter {
+  percentual<-float(n)/maxiter;
+  writeln(percentual,": ola' ",nome);
   n<-n+1;
 }

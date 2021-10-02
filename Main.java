@@ -601,7 +601,7 @@ class Lexer {
                         concatLexeme();
                         changeState(12); // Continua leitura de numero real
                     } else if (isValid(c) || isEOF(c)) {
-                        changeState(24); // Lexema nao esperado
+                        changeState(24); // Lexema nao identificado
                     } else {
                         changeState(25); // Caractere invalido
                     }
@@ -611,7 +611,7 @@ class Lexer {
                     if (isDigit(c)) {
                         concatLexeme();
                         if (!checkFloatPrecision()) {
-                            changeState(24); // Lexema nao esperado (precisao acima de 6 digitos)
+                            changeState(24); // Lexema nao identificado
                         }
                     } else {
                         giveBack();
@@ -654,7 +654,7 @@ class Lexer {
                         concatLexeme();
                         finalState(); // Fim de leitura de '&&'
                     } else if (isValid(c) || isEOF(c)) {
-                        changeState(24); // Caractere nao esperado
+                        changeState(24); // Lexema nao identificado
                     } else {
                         changeState(25); // Caractere invalido
                     }
@@ -665,7 +665,7 @@ class Lexer {
                         concatLexeme();
                         finalState(); // Fim de leitura de '||'
                     } else if (isValid(c) || isEOF(c)) {
-                        changeState(24); // Caractere nao esperado
+                        changeState(24); // Lexema nao identificado
                     } else {
                         changeState(25); // Caractere invalido
                     }
@@ -674,8 +674,8 @@ class Lexer {
                 case 18: // Leitura de ID e tokens
                     if (isLetter(c) || isDigit(c) || c == '.' || c == '_') {
                         concatLexeme();
-                        if (lexeme.length() > 32) {
-                            changeState(24); // Verifica se ID possui tamanho permitido
+                        if (lexeme.length() > 32) { // Verifica se ID possui tamanho permitido
+                            changeState(24); // Lexema nao identificado
                         }
                     } else {
                         giveBack();
