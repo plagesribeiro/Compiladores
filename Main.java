@@ -1,6 +1,13 @@
+// Pontifícia Universidade Catolica de Minas Gerais
+// 
+// Jose Mario de Carvalho Lacerda
+// Pedro Lages Ribeiro
+// Pedro Gonzaga Prado
+
 import java.util.Hashtable;
 import java.io.IOException;
 
+// Classe Main, que inicia o parser
 public class Main {
     public static void main(String[] args) throws IOException {
         Parser p = new Parser();
@@ -8,6 +15,7 @@ public class Main {
     }
 }
 
+// Classe Parser
 class Parser {
     private Lexer lexer;
     private Token token;
@@ -16,6 +24,7 @@ class Parser {
         this.lexer = new Lexer();
     }
 
+    // Metodo para verificar se o token recebido casa com o token esperado
     void CasaToken(byte esperado) {
         if (token.tag == esperado) {
             readNextToken();
@@ -26,6 +35,7 @@ class Parser {
         }
     }
 
+    // Le o proximo token utilizando o analisador lexico
     void readNextToken() {
         try {
             token = lexer.scan();
@@ -37,11 +47,13 @@ class Parser {
         }
     }
 
+    // Erro de fim de arquivo nao esperado
     void errorEOF() {
         System.out.print(lexer.line + "\nfim de arquivo nao esperado.");
         exit();
     }
 
+    // Erro de token nao esperado
     void errorNotExpectedToken() {
         if (token.tag == Token.EOF) {
             errorEOF();
@@ -51,10 +63,12 @@ class Parser {
         exit();
     }
 
+    // Finaliza o programa
     void exit() {
         System.exit(1);
     }
 
+    // Termina a execucao com sucesso
     void EOF() {
         if (token.tag == Token.EOF) {
             CasaToken(Token.EOF);
@@ -63,6 +77,8 @@ class Parser {
         }
     }
 
+    // Estado inicial da gramatica
+    // S -> {Declaracao | Comandos}* EOF
     public void S() {
         readNextToken();
         EOF();
@@ -70,6 +86,8 @@ class Parser {
             ;
     }
 
+    // Estado da gramatica responsavel por comandos de declaracao
+    // Declaracao -> ( Tipo Lista-de-ids ";" | "const" ID "=" Exp ";")
     boolean Declaracao() {
         if (Tipo()) {
             if (!ListaDeIds())
@@ -91,6 +109,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsaval por validacao do tipo da variavel
+    // Tipo -> "char" | "string" | "int" | "float"
     boolean Tipo() {
         if (token.tag == Token.INT) {
             CasaToken(Token.INT);
@@ -108,6 +128,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel pela geracao de comandos ou bloco de comandos
+    // Comandos -> "{" Comando* "}" | Comando
     boolean Comandos() {
         if (token.tag == Token.OPEN_BRACE) {
             CasaToken(Token.OPEN_BRACE);
@@ -123,6 +145,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel pela geracao do comando
+    // Comando -> [Atribuicao | Repeticao | Teste | Leitura | Escrita] ";"
     boolean Comando() {
         Atribuicao();
         Repeticao();
@@ -138,6 +162,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel pela geracao das listas de IDs
+    // Lista-de-ids -> Di {"," Di}*
     boolean ListaDeIds() {
         if (Di()) {
             do {
@@ -153,6 +179,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel pela geracao de ID
+    // Di -> ID[<-Const]
     boolean Di() {
         if (token.tag == Token.ID) {
             CasaToken(Token.ID);
@@ -166,6 +194,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel pelo recebimento de valores
+    // Const -> int | float | char | string
     boolean Const() {
         if (token.tag == Token.VALUE_INT) {
             CasaToken(Token.VALUE_INT);
@@ -186,6 +216,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel por atribuicoes
+    // Atribuicao -> ID ["["Exp"]"] "<-" Exp
     boolean Atribuicao() {
         if (token.tag == Token.ID) {
             CasaToken(Token.ID);
@@ -204,6 +236,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel pelos comandos de repeticao
+    // Repeticao -> while Exp Comandos
     boolean Repeticao() {
         if (token.tag == Token.WHILE) {
             CasaToken(Token.WHILE);
@@ -216,6 +250,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel por testes
+    // Teste -> if Exp Comandos else Comandos
     boolean Teste() {
         if (token.tag == Token.IF) {
             CasaToken(Token.IF);
@@ -231,6 +267,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel pelo readln
+    // Leitura -> readln"(" ID | Exp ")"
     boolean Leitura() {
         if (token.tag == Token.READLN) {
             CasaToken(Token.READLN);
@@ -246,6 +284,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel pelo writeln
+    // Escrita -> (write|writeln) "("Exp {"," Exp}*")"
     boolean Escrita() {
         if (token.tag == Token.WRITE || token.tag == Token.WRITELN) {
             CasaToken(token.tag);
@@ -266,6 +306,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel por gerar expressoes
+    // Exp -> ExpS {Comp ExpS}
     boolean Expressao() {
         if (ExpS()) {
             do {
@@ -283,6 +325,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel por comparacoes
+    // Comp -> (= | != | < | > | <= | >=)
     boolean Comp() {
         if (token.tag == Token.EQ) {
             CasaToken(Token.EQ);
@@ -310,6 +354,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel pelas expressoes secundarias
+    // ExpS -> [+|-] T {(+|-|"||") T}
     boolean ExpS() {
         if (token.tag == Token.MINUS || token.tag == Token.PLUS) {
             CasaToken(token.tag);
@@ -328,6 +374,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel pelo termo
+    // T -> F {Op F}
     boolean T() {
         if (F()) {
             do {
@@ -342,6 +390,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel por operacoes
+    // Op -> *|/|&&|div|mod
     boolean Op() {
         if (token.tag == Token.MULTIPLY) {
             CasaToken(Token.MULTIPLY);
@@ -366,6 +416,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel pelo fator
+    // F -> ID["[" Exp "]"] | Const | !F | P | "int" P | "float" P
     boolean F() {
         if (token.tag == Token.ID) {
             CasaToken(Token.ID);
@@ -399,6 +451,8 @@ class Parser {
         return false;
     }
 
+    // Estado da gramatica responsavel pelos parenteses
+    // P -> "("Exp")"
     boolean P() {
         if (token.tag == Token.OPEN_PARENTHESIS) {
             CasaToken(Token.OPEN_PARENTHESIS);
