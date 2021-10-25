@@ -1,6 +1,6 @@
-/* Exemplo de Programa na linguagem L */
-
-int n<-1;
+string nome;
+int n;
+n <- 3.14;
 string nome;
 const MAXITER=10;
 

@@ -9,7 +9,7 @@ Comando -> [Atribuicao | Repeticao | Teste | Leitura | Escrita] ";"
 
 Lista-de-ids -> Di {"," Di}*
 Di -> ID[<-Const]
-Const -> int | float | char | string 
+Const -> int | float | char | string     
 
 
 Atribuicao -> ID ["["Exp"]"] "<-" Exp
