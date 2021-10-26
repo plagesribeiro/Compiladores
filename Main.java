@@ -1144,7 +1144,7 @@ class SymbolTable {
     // Insere um Token na tabela de simbolos
     public Token insertToken(String lexeme, Token t) {
         table.put(lexeme, t);
-        return t;
+        return table.get(lexeme);
     }
 
     // Pesquisa um Token na tabela de simbolos
@@ -1216,11 +1216,22 @@ class Token {
     public Token() {
         this.lexeme = "";
         this.tag = 0;
-        this.classe = null;
-        this.type = null;
+        this.classe = "";
+        this.type = "";
+        this.size = 0;
     }
 
     public String toString() {
         return "" + lexeme;
+    }
+}
+
+class ReferenceToken {
+    public String tipo;
+    public String endereco;
+
+    public ReferenceToken() {
+        this.tipo = "";
+        this.endereco = "";
     }
 }
