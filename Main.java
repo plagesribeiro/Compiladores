@@ -209,11 +209,10 @@ class Parser {
     // Estado da gramatica responsavel pela geracao do comando
     // Comando -> [Atribuicao | Repeticao | Teste | Leitura | Escrita] ";"
     boolean Comando() {
-        Atribuicao();
-        Repeticao();
-        Teste();
-        Leitura();
-        Escrita();
+        return Atribuicao() || Repeticao() || Teste() || Leitura() || Escrita() || PontoVirgula();
+    }
+
+    boolean PontoVirgula(){
         if (token.tag == Token.SEMICOLON) {
             CasaToken(Token.SEMICOLON);
             return true;
@@ -317,6 +316,7 @@ class Parser {
             CasaToken(Token.ASSIGN);
             if (!Expressao(expV))
                 errorNotExpectedToken();
+            PontoVirgula();
             return true;
         }
         return false;
@@ -368,6 +368,7 @@ class Parser {
                 errorNotExpectedToken();
             }
             CasaToken(Token.CLOSE_PARENTHESIS);
+            PontoVirgula();
             return true;
         }
         return false;
@@ -389,6 +390,7 @@ class Parser {
                         errorNotExpectedToken();
                 } else {
                     CasaToken(Token.CLOSE_PARENTHESIS);
+                    PontoVirgula();
                     return true;
                 }
             } while (true);
