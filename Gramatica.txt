@@ -19,7 +19,7 @@ Leitura -> readln"(" ID | Exp ")"
 Escrita -> (write|writeln) "("Exp {"," Exp}*")"
 
 
-Exp -> ExpS {Comp ExpS}
+Exp -> ExpS [Comp ExpS]
 Comp -> (= | != | < | > | <= | >=)
 ExpS -> [+|-] T {(+|-|"||") T}
 T -> F {Op F}

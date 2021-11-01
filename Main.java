@@ -402,19 +402,15 @@ class Parser {
         ReferenceToken expsV1 = new ReferenceToken();
         ReferenceToken expsV2 = new ReferenceToken();
         if (ExpS(expsV1)) {
-            do {
-                ReferenceToken compV = new ReferenceToken();
-                if (Comp(compV)) {
-                    if (!ExpS(expsV2))
-                        errorNotExpectedToken();
-                    acaoSemanticaComp(expsV1, expsV2, compV);
-                    expV.tipo = "boolean";
-                } else {
-                    return true;
-                }
-                expsV1 = expsV2;
-                expsV2 = new ReferenceToken();
-            } while (true);
+            ReferenceToken compV = new ReferenceToken();
+            if (Comp(compV)) {
+                if (!ExpS(expsV2))
+                    errorNotExpectedToken();
+                acaoSemanticaComp(expsV1, expsV2, compV);
+                expV.tipo = "boolean";
+            }
+            return true;
+
         } else {
             errorNotExpectedToken();
         }
@@ -487,7 +483,8 @@ class Parser {
                     if (!T(tV))
                         errorNotExpectedToken();
                 } else {
-                    expsV = tV;
+                    expsV.endereco = tV.endereco;
+                    expsV.tipo = tV.tipo;
                     return true;
                 }
             } while (true);
@@ -500,7 +497,8 @@ class Parser {
     boolean T(ReferenceToken tV) {
         ReferenceToken fV = new ReferenceToken();
         if (F(fV)) {
-            tV = fV;
+            tV.endereco = fV.endereco;
+            tV.tipo = fV.tipo;
             do {
                 if (Op()) {
                     if (!F(fV))

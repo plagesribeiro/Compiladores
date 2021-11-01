@@ -1,13 +1,10 @@
 int n <- 3;
-string nome <- "chato";
-string pessoa <- "monza";
-float fl <- 3.43;
-char letra <- 'a';
-
-if(n > fl) {
-  
+int m <- 10;
+while n > m {
+  n <- n+1;
 }
-int n <- 3;
+
+
 n <- 4.3;
 string nome;
 const MAXITER=10;
