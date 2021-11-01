@@ -1,6 +1,5 @@
-string nome;
-int n;
-n <- 3.14;
+int n <- 3;
+n <- 4.3;
 string nome;
 const MAXITER=10;
 

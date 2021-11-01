@@ -132,9 +132,9 @@ class Parser {
     // Estado da gramatica responsavel por comandos de declaracao
     // Declaracao -> ( Tipo Lista-de-ids ";" | "const" ID "=" Exp ";")
     boolean Declaracao() {
-        String tipo = Tipo();
-        if (tipo != null) {
-            if (!ListaDeIds(tipo))
+        ReferenceToken tipoV = new ReferenceToken();
+        if (Tipo(tipoV)) {
+            if (!ListaDeIds(tipoV))
                 errorNotExpectedToken();
             CasaToken(Token.SEMICOLON);
             EOF();
@@ -142,11 +142,17 @@ class Parser {
 
         } else if (token.tag == Token.CONST) {
             CasaToken(Token.CONST);
-            token.classe = "classe-const";
-            isIdNotInicialized();
+            ReferenceToken constV = new ReferenceToken();
+            if (token.classe.equals("")) {
+                token.classe = "classe-const";
+                constV.endereco = token.lexeme;
+            } else {
+                errorInitializedId();
+            }
             CasaToken(Token.ID);
             CasaToken(Token.EQ);
-            if (!Expressao())
+
+            if (!Expressao(constV))
                 errorNotExpectedToken();
             CasaToken(Token.SEMICOLON);
             EOF();
@@ -157,27 +163,35 @@ class Parser {
 
     // Estado da gramatica responsaval por validacao do tipo da variavel
     // Tipo -> "char" | "string" | "int" | "float"
-    String Tipo() {
-        String tipo = null;
+    boolean Tipo(ReferenceToken tipoV) {
         if (token.tag == Token.INT) {
+            tipoV.tipo = "int";
+            tipoV.endereco = token.lexeme;
             CasaToken(Token.INT);
-            tipo = "int";
+            return true;
         } else if (token.tag == Token.FLOAT) {
+            tipoV.tipo = "float";
+            tipoV.endereco = token.lexeme;
             CasaToken(Token.FLOAT);
-            tipo = "float";
+            return true;
         } else if (token.tag == Token.STRING) {
+            tipoV.tipo = "string";
+            tipoV.endereco = token.lexeme;
             CasaToken(Token.STRING);
-            tipo = "string";
+            return true;
         } else if (token.tag == Token.CHAR) {
+            tipoV.tipo = "char";
+            tipoV.endereco = token.lexeme;
             CasaToken(Token.CHAR);
-            tipo = "char";
+            return true;
         }
-        return tipo;
+        return false;
     }
 
     // Estado da gramatica responsavel pela geracao de comandos ou bloco de comandos
     // Comandos -> "{" Comando* "}" | Comando
     boolean Comandos() {
+        ReferenceToken comandoV;
         if (token.tag == Token.OPEN_BRACE) {
             CasaToken(Token.OPEN_BRACE);
             while (Comando())
@@ -211,12 +225,12 @@ class Parser {
 
     // Estado da gramatica responsavel pela geracao das listas de IDs
     // Lista-de-ids -> Di {"," Di}*
-    boolean ListaDeIds(String tipo) {
-        if (Di(tipo)) {
+    boolean ListaDeIds(ReferenceToken tipoV) {
+        if (Di(tipoV)) {
             do {
                 if (token.tag == Token.COMMA) {
                     CasaToken(Token.COMMA);
-                    if (!Di(tipo))
+                    if (!Di(tipoV))
                         errorNotExpectedToken();
                 } else {
 
@@ -229,16 +243,25 @@ class Parser {
 
     // Estado da gramatica responsavel pela geracao de ID
     // Di -> ID[<-Const]
-    boolean Di(String tipo) {
+    boolean Di(ReferenceToken tipoV) {
         if (token.tag == Token.ID) {
-            token.classe = "classe-var";
-            token.type = tipo;
-            isIdNotInicialized();
+            if (token.classe.equals("")) {
+                token.classe = "classe-var";
+                token.type = tipoV.tipo;
+            } else {
+                errorInitializedId();
+            }
+
             CasaToken(Token.ID);
             if (token.tag == Token.ASSIGN) {
                 CasaToken(Token.ASSIGN);
-                if (!Const())
+                ReferenceToken constV = new ReferenceToken();
+                if (!Const(constV)) {
                     errorNotExpectedToken();
+                }
+                if (!constV.tipo.equals(tipoV.tipo)) {
+                    errorIncompatibleTypes();
+                }
             }
             return true;
         }
@@ -247,24 +270,28 @@ class Parser {
 
     // Estado da gramatica responsavel pelo recebimento de valores
     // Const -> int | float | char | string
-    boolean Const() {
+    boolean Const(ReferenceToken constV) {
         if (token.tag == Token.VALUE_INT) {
-            token.type = "int";
+            constV.endereco = token.lexeme;
+            constV.tipo = "int";
             CasaToken(Token.VALUE_INT);
             return true;
 
         } else if (token.tag == Token.VALUE_FLOAT) {
-            token.type = "float";
+            constV.endereco = token.lexeme;
+            constV.tipo = "float";
             CasaToken(Token.VALUE_FLOAT);
             return true;
 
         } else if (token.tag == Token.VALUE_STRING) {
-            token.type = "string";
+            constV.endereco = token.lexeme;
+            constV.tipo = "string";
             CasaToken(Token.VALUE_STRING);
             return true;
 
         } else if (token.tag == Token.VALUE_CHAR) {
-            token.type = "char";
+            constV.endereco = token.lexeme;
+            constV.tipo = "char";
             CasaToken(Token.VALUE_CHAR);
             return true;
         }
@@ -275,8 +302,9 @@ class Parser {
     // Atribuicao -> ID ["["Exp"]"] "<-" Exp
     boolean Atribuicao() {
         if (token.tag == Token.ID) {
-            isIdInicialized();
-            Token var = token;
+            if (token.classe.equals("")) {
+                errorNotInitializedId();
+            }
             CasaToken(Token.ID);
             if (token.tag == Token.OPEN_BRACKET) {
                 CasaToken(Token.OPEN_BRACKET);
@@ -331,7 +359,6 @@ class Parser {
             CasaToken(Token.READLN);
             CasaToken(Token.OPEN_PARENTHESIS);
             if (token.tag == Token.ID) {
-                isIdInicialized();
                 CasaToken(Token.ID);
             } else if (!Expressao()) {
                 errorNotExpectedToken();
@@ -366,8 +393,9 @@ class Parser {
 
     // Estado da gramatica responsavel por gerar expressoes
     // Exp -> ExpS {Comp ExpS}
-    boolean Expressao() {
-        if (ExpS()) {
+    boolean Expressao(ReferenceToken expV) {
+        ReferenceToken expsV;
+        if (ExpS(expsV)) {
             do {
                 if (Comp()) {
                     if (!ExpS())
@@ -414,7 +442,7 @@ class Parser {
 
     // Estado da gramatica responsavel pelas expressoes secundarias
     // ExpS -> [+|-] T {(+|-|"||") T}
-    boolean ExpS() {
+    boolean ExpS(ReferenceToken expsV) {
         if (token.tag == Token.MINUS || token.tag == Token.PLUS) {
             CasaToken(token.tag);
         }
@@ -477,8 +505,8 @@ class Parser {
     // Estado da gramatica responsavel pelo fator
     // F -> ID["[" Exp "]"] | Const | !F | P | "int" P | "float" P
     boolean F() {
+        ReferenceToken fV = new ReferenceToken();
         if (token.tag == Token.ID) {
-            isIdInicialized();
             CasaToken(Token.ID);
             if (token.tag == Token.OPEN_BRACKET) {
                 CasaToken(Token.OPEN_BRACKET);
@@ -488,7 +516,7 @@ class Parser {
             }
             return true;
 
-        } else if (Const()) {
+        } else if (Const(fV)) {
             return true;
 
         } else if (P()) {
@@ -905,7 +933,7 @@ class Lexer {
 
     private boolean isInt() {
         for (int i = 0; i < lexeme.length(); i++) {
-            if (!isDigit(i)) {
+            if (!isDigit(lexeme.charAt(i))) {
                 return false;
             }
         }
