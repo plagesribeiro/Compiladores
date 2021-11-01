@@ -301,6 +301,7 @@ class Parser {
     // Estado da gramatica responsavel por atribuicoes
     // Atribuicao -> ID ["["Exp"]"] "<-" Exp
     boolean Atribuicao() {
+        ReferenceToken expV = new ReferenceToken();
         if (token.tag == Token.ID) {
             if (token.classe.equals("")) {
                 errorNotInitializedId();
@@ -308,13 +309,13 @@ class Parser {
             CasaToken(Token.ID);
             if (token.tag == Token.OPEN_BRACKET) {
                 CasaToken(Token.OPEN_BRACKET);
-                if (!Expressao())
+                if (!Expressao(expV))
                     errorNotExpectedToken();
                 CasaToken(Token.CLOSE_BRACKET);
                 return true;
             }
             CasaToken(Token.ASSIGN);
-            if (!Expressao())
+            if (!Expressao(expV))
                 errorNotExpectedToken();
             return true;
         }
@@ -324,9 +325,10 @@ class Parser {
     // Estado da gramatica responsavel pelos comandos de repeticao
     // Repeticao -> while Exp Comandos
     boolean Repeticao() {
+        ReferenceToken repV = new ReferenceToken();
         if (token.tag == Token.WHILE) {
             CasaToken(Token.WHILE);
-            if (!Expressao())
+            if (!Expressao(repV))
                 errorNotExpectedToken();
             if (!Comandos())
                 errorNotExpectedToken();
@@ -338,9 +340,10 @@ class Parser {
     // Estado da gramatica responsavel por testes
     // Teste -> if Exp Comandos else Comandos
     boolean Teste() {
+        ReferenceToken testeV = new ReferenceToken();
         if (token.tag == Token.IF) {
             CasaToken(Token.IF);
-            if (!Expressao())
+            if (!Expressao(testeV))
                 errorNotExpectedToken();
             if (!Comandos())
                 errorNotExpectedToken();
@@ -355,12 +358,13 @@ class Parser {
     // Estado da gramatica responsavel pelo readln
     // Leitura -> readln"(" ID | Exp ")"
     boolean Leitura() {
+        ReferenceToken leituraV = new ReferenceToken();
         if (token.tag == Token.READLN) {
             CasaToken(Token.READLN);
             CasaToken(Token.OPEN_PARENTHESIS);
             if (token.tag == Token.ID) {
                 CasaToken(Token.ID);
-            } else if (!Expressao()) {
+            } else if (!Expressao(leituraV)) {
                 errorNotExpectedToken();
             }
             CasaToken(Token.CLOSE_PARENTHESIS);
@@ -372,15 +376,16 @@ class Parser {
     // Estado da gramatica responsavel pelo writeln
     // Escrita -> (write|writeln) "("Exp {"," Exp}*")"
     boolean Escrita() {
+        ReferenceToken escritaV = new ReferenceToken();
         if (token.tag == Token.WRITE || token.tag == Token.WRITELN) {
             CasaToken(token.tag);
             CasaToken(Token.OPEN_PARENTHESIS);
-            if (!Expressao())
+            if (!Expressao(escritaV))
                 errorNotExpectedToken();
             do {
                 if (token.tag == Token.COMMA) {
                     CasaToken(Token.COMMA);
-                    if (!Expressao())
+                    if (!Expressao(escritaV))
                         errorNotExpectedToken();
                 } else {
                     CasaToken(Token.CLOSE_PARENTHESIS);
@@ -403,6 +408,7 @@ class Parser {
                     if (!ExpS(expsV2))
                         errorNotExpectedToken();
                     acaoSemanticaComp(expsV1, expsV2, compV);
+                    expV.tipo = "boolean";
                 } else {
                     return true;
                 }
@@ -416,17 +422,20 @@ class Parser {
         return false;
     }
 
-    void acaoSemanticaComp(ReferenceToken e1, ReferenceToken e2, ReferenceToken compV) {
-        if (compV.endereco.equals("=")) {
-            if ((e1.tipo.equals("string") && e2.tipo.equals("char")) ||
-                 e1.tipo.equals("string") &&) {
-
-            }
-        } else if (compV.endereco.equals("!=")) {
-            if (!e1.tipo.equals(e2.tipo)) {
-
-            }
-        }
+    void acaoSemanticaComp(ReferenceToken e1, ReferenceToken e2, ReferenceToken comp) {
+        if (e1.tipo.equals("string") && e2.tipo.equals("string") && comp.tipo.equals("="))
+            return;
+        if (e1.tipo.equals("char") && e2.tipo.equals("char"))
+            return;
+        if (e1.tipo.equals("int") && e2.tipo.equals("float"))
+            return;
+        if (e1.tipo.equals("float") && e2.tipo.equals("int"))
+            return;
+        if (e1.tipo.equals("int") && e2.tipo.equals("int"))
+            return;
+        if (e1.tipo.equals("float") && e2.tipo.equals("float"))
+            return;
+        errorIncompatibleTypes();
     }
 
     // Estado da gramatica responsavel por comparacoes
@@ -478,6 +487,7 @@ class Parser {
                     if (!T(tV))
                         errorNotExpectedToken();
                 } else {
+                    expsV = tV;
                     return true;
                 }
             } while (true);
@@ -492,13 +502,14 @@ class Parser {
         if (F(fV)) {
             do {
                 if (Op()) {
-                    if (!F())
+                    if (!F(fV))
                         errorNotExpectedToken();
                 } else {
                     return true;
                 }
             } while (true);
         }
+        tV = fV;
         return false;
     }
 
@@ -535,7 +546,7 @@ class Parser {
             fV.tipo = token.type;
             fV.endereco = token.lexeme;
             CasaToken(Token.ID);
-            ReferenceToken expV;
+            ReferenceToken expV = new ReferenceToken();
             if (token.tag == Token.OPEN_BRACKET) {
                 CasaToken(Token.OPEN_BRACKET);
                 if (!Expressao(expV))
@@ -559,7 +570,7 @@ class Parser {
 
         } else if (token.tag == Token.FLOAT) {
             CasaToken(Token.FLOAT);
-            if (!P())
+            if (!P(fV))
                 errorNotExpectedToken();
             return true;
         }
@@ -600,7 +611,7 @@ class Lexer {
         // Insere as palavras reservadas na Tabela de Simbolos
         this.st.insertToken("const", new Token("const", Token.CONST));
         this.st.insertToken("int", new Token("int", Token.INT));
-        this.st.insertToken("char", new Token("char", Token.INT));
+        this.st.insertToken("char", new Token("char", Token.CHAR));
         this.st.insertToken("while", new Token("while", Token.WHILE));
         this.st.insertToken("if", new Token("if", Token.IF));
         this.st.insertToken("float", new Token("float", Token.FLOAT));
@@ -612,8 +623,8 @@ class Lexer {
         this.st.insertToken("=", new Token("=", Token.EQ));
         this.st.insertToken("(", new Token("(", Token.OPEN_PARENTHESIS));
         this.st.insertToken(")", new Token(")", Token.CLOSE_PARENTHESIS));
-        this.st.insertToken("<", new Token("<", Token.GREATER));
-        this.st.insertToken(">", new Token(">", Token.LOWER));
+        this.st.insertToken("<", new Token("<", Token.LOWER));
+        this.st.insertToken(">", new Token(">", Token.GREATER));
         this.st.insertToken("!=", new Token("!=", Token.NOT_EQUAL));
         this.st.insertToken(">=", new Token(">=", Token.GREATER_EQUAL));
         this.st.insertToken("<=", new Token("<=", Token.LOWER_EQUAL));

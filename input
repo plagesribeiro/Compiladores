@@ -1,4 +1,13 @@
 int n <- 3;
+string nome <- "chato";
+string pessoa <- "monza";
+float fl <- 3.43;
+char letra <- 'a';
+
+if(n > fl) {
+  
+}
+int n <- 3;
 n <- 4.3;
 string nome;
 const MAXITER=10;
