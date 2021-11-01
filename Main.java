@@ -500,6 +500,7 @@ class Parser {
     boolean T(ReferenceToken tV) {
         ReferenceToken fV = new ReferenceToken();
         if (F(fV)) {
+            tV = fV;
             do {
                 if (Op()) {
                     if (!F(fV))
@@ -509,7 +510,7 @@ class Parser {
                 }
             } while (true);
         }
-        tV = fV;
+
         return false;
     }
 
